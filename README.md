@@ -2,6 +2,8 @@
 
 # Lecture Notes: Dimension Reduction and Visualization
 
+> This repository is primarily a collection of lecture slides compiled into a Quarto book for convenience. It should not be considered a comprehensive textbook or self-contained learning resource.
+
 A Quarto book covering the main methods for dimensionality reduction and visualization, from classical linear methods to modern deep learning approaches.
 
 ## Contents
