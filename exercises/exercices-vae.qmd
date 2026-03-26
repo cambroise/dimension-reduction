@@ -1,0 +1,324 @@
+# Exercises on Variational Autoencoders
+
+
+## Exercise: Alternative formulation of the ELBO
+
+Show that the ELBO can be rewritten as:
+$$
+\text{ELBO} = \mathbb{E}_{q_\Phi(\boldsymbol z | \boldsymbol x)}\left[ \log P_\Theta(\boldsymbol x | \boldsymbol z) \right] - D_{KL}\!\left(q_\Phi(\boldsymbol z | \boldsymbol x) \| p_\Theta(\boldsymbol z)\right)
+$$
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+Starting from the definition of the ELBO:
+$$
+\text{ELBO} = \mathbb{E}_{q_\Phi(\boldsymbol z | \boldsymbol x)}\left[ \log \frac{P_\Theta(\boldsymbol x, \boldsymbol z)}{q_\Phi(\boldsymbol z | \boldsymbol x)} \right]
+$$
+
+We use the chain rule $P_\Theta(\boldsymbol x, \boldsymbol z) = P_\Theta(\boldsymbol x | \boldsymbol z) \, p_\Theta(\boldsymbol z)$:
+
+\begin{eqnarray*}
+\text{ELBO} &=& \mathbb{E}_{q_\Phi(\boldsymbol z | \boldsymbol x)}\left[ \log \frac{P_\Theta(\boldsymbol x | \boldsymbol z) \, p_\Theta(\boldsymbol z)}{q_\Phi(\boldsymbol z | \boldsymbol x)} \right] \\
+&=& \mathbb{E}_{q_\Phi(\boldsymbol z | \boldsymbol x)}\left[ \log P_\Theta(\boldsymbol x | \boldsymbol z) \right] + \mathbb{E}_{q_\Phi(\boldsymbol z | \boldsymbol x)}\left[ \log \frac{p_\Theta(\boldsymbol z)}{q_\Phi(\boldsymbol z | \boldsymbol x)} \right] \\
+&=& \mathbb{E}_{q_\Phi(\boldsymbol z | \boldsymbol x)}\left[ \log P_\Theta(\boldsymbol x | \boldsymbol z) \right] - D_{KL}\!\left(q_\Phi(\boldsymbol z | \boldsymbol x) \| p_\Theta(\boldsymbol z)\right)
+\end{eqnarray*}
+
+The first term is the **expected reconstruction log-likelihood** (how well the decoder reconstructs $\boldsymbol x$ from $\boldsymbol z$). The second term is the **KL regularization** that encourages the approximate posterior to stay close to the prior.
+
+:::
+:::
+
+
+
+## Exercise: KL divergence between two multivariate Gaussians
+
+Let $q = \mathcal{N}(\boldsymbol \mu, \boldsymbol \Sigma)$ and $p = \mathcal{N}(\boldsymbol 0, \boldsymbol I_L)$ be two $L$-dimensional Gaussian distributions.
+
+1. Show that:
+$$
+D_{KL}(q \| p) = \frac{1}{2}\left[ \text{tr}(\boldsymbol \Sigma) + \boldsymbol \mu^T \boldsymbol \mu - L - \log \det(\boldsymbol \Sigma) \right]
+$$
+
+2. In the factorized case where $\boldsymbol \Sigma = \text{diag}(\sigma_1^2, \ldots, \sigma_L^2)$, show that this simplifies to:
+$$
+D_{KL}(q \| p) = -\frac{1}{2}\sum_{j=1}^{L}\left(1 + \log \sigma_j^2 - \mu_j^2 - \sigma_j^2\right)
+$$
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### Part 1: General case
+
+The KL divergence between two multivariate Gaussians $q = \mathcal{N}(\boldsymbol \mu_q, \boldsymbol \Sigma_q)$ and $p = \mathcal{N}(\boldsymbol \mu_p, \boldsymbol \Sigma_p)$ is:
+$$
+D_{KL}(q \| p) = \frac{1}{2}\left[ \log \frac{\det \boldsymbol \Sigma_p}{\det \boldsymbol \Sigma_q} - L + \text{tr}(\boldsymbol \Sigma_p^{-1} \boldsymbol \Sigma_q) + (\boldsymbol \mu_p - \boldsymbol \mu_q)^T \boldsymbol \Sigma_p^{-1} (\boldsymbol \mu_p - \boldsymbol \mu_q) \right]
+$$
+
+**Derivation.** By definition:
+\begin{eqnarray*}
+D_{KL}(q \| p) &=& \mathbb{E}_q\!\left[\log q(\boldsymbol z) - \log p(\boldsymbol z)\right]
+\end{eqnarray*}
+
+For a multivariate Gaussian $\mathcal{N}(\boldsymbol \mu, \boldsymbol \Sigma)$:
+$$
+\log \mathcal{N}(\boldsymbol z; \boldsymbol \mu, \boldsymbol \Sigma) = -\frac{L}{2}\log(2\pi) - \frac{1}{2}\log\det\boldsymbol \Sigma - \frac{1}{2}(\boldsymbol z - \boldsymbol \mu)^T \boldsymbol \Sigma^{-1}(\boldsymbol z - \boldsymbol \mu)
+$$
+
+Computing each expectation under $q$:
+
+- $\mathbb{E}_q\!\left[(\boldsymbol z - \boldsymbol \mu_q)^T \boldsymbol \Sigma_q^{-1}(\boldsymbol z - \boldsymbol \mu_q)\right] = \text{tr}(\boldsymbol \Sigma_q^{-1} \boldsymbol \Sigma_q) = L$
+- $\mathbb{E}_q\!\left[(\boldsymbol z - \boldsymbol \mu_p)^T \boldsymbol \Sigma_p^{-1}(\boldsymbol z - \boldsymbol \mu_p)\right] = \text{tr}(\boldsymbol \Sigma_p^{-1} \boldsymbol \Sigma_q) + (\boldsymbol \mu_q - \boldsymbol \mu_p)^T \boldsymbol \Sigma_p^{-1}(\boldsymbol \mu_q - \boldsymbol \mu_p)$
+
+where the second identity uses $\mathbb{E}_q[\boldsymbol z] = \boldsymbol \mu_q$ and $\text{Cov}_q(\boldsymbol z) = \boldsymbol \Sigma_q$.
+
+Subtracting:
+$$
+D_{KL}(q \| p) = \frac{1}{2}\left[\log\frac{\det \boldsymbol \Sigma_p}{\det \boldsymbol \Sigma_q} - L + \text{tr}(\boldsymbol \Sigma_p^{-1} \boldsymbol \Sigma_q) + (\boldsymbol \mu_q - \boldsymbol \mu_p)^T \boldsymbol \Sigma_p^{-1}(\boldsymbol \mu_q - \boldsymbol \mu_p)\right]
+$$
+
+With $p = \mathcal{N}(\boldsymbol 0, \boldsymbol I_L)$, we get $\boldsymbol \Sigma_p = \boldsymbol I_L$, $\boldsymbol \mu_p = \boldsymbol 0$, $\det \boldsymbol \Sigma_p = 1$, so:
+$$
+D_{KL}(q \| p) = \frac{1}{2}\left[\text{tr}(\boldsymbol \Sigma) + \boldsymbol \mu^T \boldsymbol \mu - L - \log\det(\boldsymbol \Sigma)\right]
+$$
+
+### Part 2: Factorized (diagonal) case
+
+When $\boldsymbol \Sigma = \text{diag}(\sigma_1^2, \ldots, \sigma_L^2)$:
+
+- $\text{tr}(\boldsymbol \Sigma) = \sum_{j=1}^L \sigma_j^2$
+- $\boldsymbol \mu^T \boldsymbol \mu = \sum_{j=1}^L \mu_j^2$
+- $\log\det(\boldsymbol \Sigma) = \sum_{j=1}^L \log \sigma_j^2$
+
+Substituting:
+$$
+D_{KL}(q \| p) = \frac{1}{2}\sum_{j=1}^{L}\left(\sigma_j^2 + \mu_j^2 - 1 - \log \sigma_j^2\right) = -\frac{1}{2}\sum_{j=1}^{L}\left(1 + \log \sigma_j^2 - \mu_j^2 - \sigma_j^2\right)
+$$
+
+This closed-form expression is used directly in the VAE loss function, avoiding any need for Monte Carlo estimation of the KL term.
+
+:::
+:::
+
+
+## Exercise: A minimal VAE implementation on MNIST
+
+Implement a VAE with a Bernoulli decoder on the MNIST dataset using PyTorch. The model should:
+
+1. Use a single hidden layer MLP for both encoder and decoder.
+2. Output $\boldsymbol \mu$ and $\log \boldsymbol \sigma^2$ from the encoder.
+3. Use the reparameterization trick to sample $\boldsymbol z = \boldsymbol \mu + \boldsymbol \sigma \odot \boldsymbol \epsilon$.
+4. Use a sigmoid output (Bernoulli decoder) and binary cross-entropy as reconstruction loss.
+5. Use the closed-form KL divergence derived above.
+
+Train the model for 10 epochs and visualize:
+
+- Original vs reconstructed digits
+- Digits generated by sampling from the prior $\mathcal{N}(\boldsymbol 0, \boldsymbol I)$
+- A 2D latent space (with `latent_dim=2`) colored by digit class
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### Model definition
+
+```{python}
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+import matplotlib.pyplot as plt
+import numpy as np
+
+class VAE(nn.Module):
+    def __init__(self, input_dim=784, hidden_dim=400, latent_dim=20):
+        super().__init__()
+        # Encoder
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc_mu = nn.Linear(hidden_dim, latent_dim)
+        self.fc_logvar = nn.Linear(hidden_dim, latent_dim)
+        # Decoder
+        self.fc3 = nn.Linear(latent_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, input_dim)
+
+    def encode(self, x):
+        h = F.relu(self.fc1(x))
+        return self.fc_mu(h), self.fc_logvar(h)
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + std * eps
+
+    def decode(self, z):
+        h = F.relu(self.fc3(z))
+        return torch.sigmoid(self.fc4(h))
+
+    def forward(self, x):
+        mu, logvar = self.encode(x.view(-1, 784))
+        z = self.reparameterize(mu, logvar)
+        return self.decode(z), mu, logvar
+
+def vae_loss(recon_x, x, mu, logvar):
+    # Reconstruction: binary cross-entropy
+    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
+    # KL divergence (closed form for diagonal Gaussian vs N(0,I))
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return BCE + KLD
+```
+
+### Training
+
+```{python}
+torch.manual_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+train_dataset = datasets.MNIST('./data', train=True, download=True,
+                               transform=transforms.ToTensor())
+test_dataset = datasets.MNIST('./data', train=False, download=True,
+                              transform=transforms.ToTensor())
+train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+
+model = VAE(latent_dim=20).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+for epoch in range(1, 11):
+    model.train()
+    train_loss = 0
+    for batch, _ in train_loader:
+        batch = batch.to(device)
+        optimizer.zero_grad()
+        recon, mu, logvar = model(batch)
+        loss = vae_loss(recon, batch, mu, logvar)
+        loss.backward()
+        optimizer.step()
+        train_loss += loss.item()
+    avg_loss = train_loss / len(train_loader.dataset)
+    print(f"Epoch {epoch:2d}: avg loss = {avg_loss:.2f}")
+```
+
+### Original vs reconstructed digits
+
+```{python}
+model.eval()
+with torch.no_grad():
+    test_batch, _ = next(iter(test_loader))
+    test_batch = test_batch.to(device)
+    recon, _, _ = model(test_batch)
+
+n = 10
+fig, axes = plt.subplots(2, n, figsize=(12, 2.5))
+for i in range(n):
+    axes[0, i].imshow(test_batch[i].cpu().squeeze(), cmap='gray')
+    axes[0, i].axis('off')
+    axes[1, i].imshow(recon[i].cpu().view(28, 28), cmap='gray')
+    axes[1, i].axis('off')
+axes[0, 0].set_title('Original', fontsize=10, loc='left')
+axes[1, 0].set_title('Reconstructed', fontsize=10, loc='left')
+plt.tight_layout()
+plt.show()
+```
+
+### Generation from the prior
+
+```{python}
+model.eval()
+with torch.no_grad():
+    z_sample = torch.randn(20, 20).to(device)
+    generated = model.decode(z_sample).cpu().view(-1, 28, 28)
+
+fig, axes = plt.subplots(2, 10, figsize=(12, 2.5))
+for i in range(20):
+    axes[i // 10, i % 10].imshow(generated[i], cmap='gray')
+    axes[i // 10, i % 10].axis('off')
+plt.suptitle('Generated digits (sampled from prior)', fontsize=12)
+plt.tight_layout()
+plt.show()
+```
+
+### 2D latent space visualization
+
+We retrain a VAE with `latent_dim=2` to visualize the latent space directly.
+
+```{python}
+torch.manual_seed(42)
+model_2d = VAE(latent_dim=2).to(device)
+optimizer_2d = torch.optim.Adam(model_2d.parameters(), lr=1e-3)
+
+for epoch in range(1, 21):
+    model_2d.train()
+    for batch, _ in train_loader:
+        batch = batch.to(device)
+        optimizer_2d.zero_grad()
+        recon, mu, logvar = model_2d(batch)
+        loss = vae_loss(recon, batch, mu, logvar)
+        loss.backward()
+        optimizer_2d.step()
+
+# Encode the test set
+model_2d.eval()
+all_mu = []
+all_labels = []
+with torch.no_grad():
+    for batch, labels in test_loader:
+        mu, _ = model_2d.encode(batch.to(device).view(-1, 784))
+        all_mu.append(mu.cpu())
+        all_labels.append(labels)
+all_mu = torch.cat(all_mu).numpy()
+all_labels = torch.cat(all_labels).numpy()
+
+fig, ax = plt.subplots(figsize=(8, 6))
+scatter = ax.scatter(all_mu[:, 0], all_mu[:, 1],
+                     c=all_labels, cmap='tab10', s=2, alpha=0.5)
+cbar = plt.colorbar(scatter, ax=ax, ticks=range(10))
+cbar.set_label('Digit class')
+ax.set_xlabel('$z_1$')
+ax.set_ylabel('$z_2$')
+ax.set_title('MNIST test set encoded in 2D latent space')
+plt.tight_layout()
+plt.show()
+```
+
+### Manifold traversal in 2D latent space
+
+We can also decode a grid of points in the 2D latent space to see how the digits change continuously:
+
+```{python}
+model_2d.eval()
+n_grid = 15
+grid_range = np.linspace(-3, 3, n_grid)
+figure = np.zeros((28 * n_grid, 28 * n_grid))
+
+with torch.no_grad():
+    for i, yi in enumerate(grid_range):
+        for j, xi in enumerate(grid_range):
+            z = torch.tensor([[xi, yi]], dtype=torch.float32).to(device)
+            decoded = model_2d.decode(z).cpu().view(28, 28).numpy()
+            figure[i * 28:(i + 1) * 28, j * 28:(j + 1) * 28] = decoded
+
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.imshow(figure, cmap='gray', origin='upper',
+          extent=[-3, 3, -3, 3])
+ax.set_xlabel('$z_1$')
+ax.set_ylabel('$z_2$')
+ax.set_title('Decoded digits across the 2D latent space')
+plt.tight_layout()
+plt.show()
+```
+
+### Remarks
+
+1. **Encoder** (`encode`): a single hidden layer MLP that outputs $\boldsymbol \mu$ and $\log \boldsymbol \sigma^2$.
+2. **Reparameterization** (`reparameterize`): samples $\boldsymbol z = \boldsymbol \mu + \boldsymbol \sigma \odot \boldsymbol \epsilon$ with $\boldsymbol \epsilon \sim \mathcal{N}(\boldsymbol 0, \boldsymbol I)$.
+3. **Decoder** (`decode`): a single hidden layer MLP with sigmoid output (Bernoulli decoder).
+4. **Loss** (`vae_loss`): binary cross-entropy (reconstruction) + closed-form KL divergence.
+5. **Latent space**: the 2D visualization shows that digit classes form smooth, overlapping clusters — a direct consequence of the KL regularization pushing the posteriors toward the prior $\mathcal{N}(\boldsymbol 0, \boldsymbol I)$.
+6. **Manifold**: decoding a regular grid in latent space produces smooth transitions between digit styles, confirming the continuity of the learned representation.
+
+:::
+:::

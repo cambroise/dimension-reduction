@@ -1,0 +1,334 @@
+# Exercises on Multidimensional Scaling
+
+
+## Exercise: Double centering recovers the Gram matrix
+
+Let $\boldsymbol X \in \mathbb{R}^{n \times p}$ be a **column-centered** data matrix (i.e. $\boldsymbol X^T \mathbf{1} = \mathbf{0}$), and let $D^2$ be the $n \times n$ matrix of squared Euclidean distances, with entries
+$$
+d_{ij}^2 = \|\boldsymbol x_i - \boldsymbol x_j\|^2.
+$$
+
+Let $J = I_n - \frac{1}{n}\mathbf{1}\mathbf{1}^T$ be the centering matrix.
+
+Show that
+$$
+-\frac{1}{2} J D^2 J = \boldsymbol X \boldsymbol X^T.
+$$
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+**Step 1: Express $d_{ij}^2$ in terms of the Gram matrix.**
+
+$$
+d_{ij}^2 = \|\boldsymbol x_i - \boldsymbol x_j\|^2 = \|\boldsymbol x_i\|^2 + \|\boldsymbol x_j\|^2 - 2\boldsymbol x_i^T \boldsymbol x_j
+$$
+
+Let $B = \boldsymbol X \boldsymbol X^T$ (the Gram matrix), and let $b_i = B_{ii} = \|\boldsymbol x_i\|^2$. In matrix form:
+
+$$
+D^2 = \boldsymbol b \mathbf{1}^T + \mathbf{1} \boldsymbol b^T - 2B
+$$
+
+where $\boldsymbol b = \mathrm{diag}(B)$.
+
+**Step 2: Apply double centering.**
+
+We apply $J$ on both sides. Note that $J \mathbf{1} = \mathbf{0}$, so:
+
+- $J (\boldsymbol b \mathbf{1}^T) J = J \boldsymbol b \underbrace{(\mathbf{1}^T J)}_{\mathbf{0}^T} = 0$
+- $J (\mathbf{1} \boldsymbol b^T) J = \underbrace{(J \mathbf{1})}_{\mathbf{0}} \boldsymbol b^T J = 0$
+- $J (-2B) J = -2 J B J$
+
+So $J D^2 J = -2 J B J$.
+
+**Step 3: Simplify $JBJ$.**
+
+Since $\boldsymbol X$ is column-centered, $\boldsymbol X^T \mathbf{1} = \mathbf{0}$, which means $B \mathbf{1} = \boldsymbol X \boldsymbol X^T \mathbf{1} = \boldsymbol X (\boldsymbol X^T \mathbf{1}) = \mathbf{0}$. Therefore:
+
+$$
+JBJ = \left(I - \frac{1}{n}\mathbf{1}\mathbf{1}^T\right) B \left(I - \frac{1}{n}\mathbf{1}\mathbf{1}^T\right)
+= B - \frac{1}{n} B\mathbf{1}\mathbf{1}^T - \frac{1}{n}\mathbf{1}\mathbf{1}^T B + \frac{1}{n^2}\mathbf{1}\mathbf{1}^T B \mathbf{1}\mathbf{1}^T = B
+$$
+
+since $B\mathbf{1} = \mathbf{0}$ and $\mathbf{1}^T B = \mathbf{0}^T$.
+
+**Conclusion:**
+
+$$
+-\frac{1}{2} J D^2 J = -\frac{1}{2} \cdot (-2B) = B = \boldsymbol X \boldsymbol X^T. \qquad \square
+$$
+
+This result is the key insight behind classical scaling: given only the pairwise distance matrix $D^2$, double centering recovers the Gram matrix $\boldsymbol X \boldsymbol X^T$, from which a low-dimensional embedding can be extracted by truncated eigendecomposition.
+
+:::
+:::
+
+
+## Exercise: Classical MDS is equivalent to PCA on Euclidean data
+
+Let $\boldsymbol X \in \mathbb{R}^{n \times p}$ be a column-centered data matrix with SVD $\boldsymbol X = U S V^T$.
+
+The classical MDS algorithm applied to the Euclidean distance matrix $D^2$ produces an embedding $Y \in \mathbb{R}^{n \times k}$.
+
+Show that the classical MDS embedding equals the first $k$ principal components of $\boldsymbol X$, i.e.
+$$
+Y = U_k S_k
+$$
+where $U_k$ and $S_k$ contain the $k$ leading columns/values of the SVD of $\boldsymbol X$.
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+**Classical MDS algorithm:**
+
+1. Compute $B = -\frac{1}{2} J D^2 J$.
+2. Eigendecompose: $B = U \Lambda U^T$ (with $\Lambda$ diagonal, eigenvalues decreasing).
+3. Return $Y = U_k \Lambda_k^{1/2}$.
+
+**From the previous exercise**, when dissimilarities are Euclidean distances from a centered matrix $\boldsymbol X$, we have
+$$
+B = \boldsymbol X \boldsymbol X^T.
+$$
+
+**Eigendecomposition of $B$:** By the SVD of $\boldsymbol X = USV^T$:
+$$
+B = \boldsymbol X \boldsymbol X^T = U S V^T V S^T U^T = U S^2 U^T.
+$$
+
+So the eigendecomposition of $B$ gives $\Lambda = S^2$ and eigenvectors $U$.
+
+**Classical MDS solution:**
+$$
+Y = U_k \Lambda_k^{1/2} = U_k S_k.
+$$
+
+**PCA solution:** The first $k$ principal components (projections onto top-$k$ left singular vectors) are:
+$$
+\boldsymbol X V_k = U S V^T V_k = U_k S_k.
+$$
+
+Both expressions are equal, which proves that classical MDS on Euclidean distances is equivalent to PCA. $\square$
+
+**Remark:** When $D^2$ contains non-Euclidean dissimilarities, some eigenvalues of $B$ may be negative. In that case, one typically retains only the positive eigenvalues, leading to an approximate embedding.
+
+:::
+:::
+
+
+## Exercise: Gradient of Sammon's stress
+
+Sammon's mapping minimizes the following stress function over the configuration $Y = (\boldsymbol y_1, \ldots, \boldsymbol y_n)^T \in \mathbb{R}^{n \times k}$:
+
+$$
+S(Y) = \frac{1}{\sum_{i < j} \delta_{ij}} \sum_{i < j} \frac{(\delta_{ij} - d_{ij})^2}{\delta_{ij}}
+$$
+
+where $\delta_{ij}$ are the input dissimilarities and $d_{ij} = \|\boldsymbol y_i - \boldsymbol y_j\|$ are the Euclidean distances in the embedding.
+
+Show that the partial derivative with respect to coordinate $y_{ik}$ (the $k$-th coordinate of point $i$) is:
+
+$$
+\frac{\partial S(Y)}{\partial y_{ik}} = -\frac{2}{\sum_{i<j}\delta_{ij}} \sum_{j \neq i} w_{ij} \frac{\delta_{ij} - d_{ij}}{d_{ij}} (y_{ik} - y_{jk})
+$$
+
+with $w_{ij} = 1/\delta_{ij}$.
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+Let $C = \frac{1}{\sum_{i<j}\delta_{ij}}$ be the normalizing constant. Write:
+$$
+S(Y) = C \sum_{i < j} w_{ij} (\delta_{ij} - d_{ij})^2, \quad w_{ij} = \frac{1}{\delta_{ij}}.
+$$
+
+**Step 1: Derivative of $d_{ij}$ w.r.t. $y_{ik}$.**
+
+$$
+d_{ij} = \left(\sum_{\ell=1}^k (y_{i\ell} - y_{j\ell})^2\right)^{1/2}
+$$
+
+$$
+\frac{\partial d_{ij}}{\partial y_{ik}} = \frac{y_{ik} - y_{jk}}{d_{ij}}
+$$
+
+**Step 2: Chain rule on each term.**
+
+For a fixed pair $(i, j)$ with $i < j$:
+$$
+\frac{\partial}{\partial y_{ik}} w_{ij}(\delta_{ij} - d_{ij})^2 = -2 w_{ij} (\delta_{ij} - d_{ij}) \frac{\partial d_{ij}}{\partial y_{ik}} = -2 w_{ij} \frac{\delta_{ij} - d_{ij}}{d_{ij}} (y_{ik} - y_{jk})
+$$
+
+Point $i$ also appears symmetrically in pairs $(j, i)$ with $j > i$. By symmetry ($d_{ij} = d_{ji}$ and $\delta_{ij} = \delta_{ji}$), each such pair contributes identically. Summing over all $j \neq i$ (by combining both orderings $j < i$ and $j > i$):
+
+$$
+\frac{\partial S(Y)}{\partial y_{ik}} = -2C \sum_{j \neq i} w_{ij} \frac{\delta_{ij} - d_{ij}}{d_{ij}} (y_{ik} - y_{jk})
+$$
+
+which is the desired result. $\square$
+
+**Gradient descent update:** At iteration $t$:
+$$
+y_{ik}^{(t+1)} \leftarrow y_{ik}^{(t)} - \eta \, \frac{\partial S(Y)}{\partial y_{ik}}
+$$
+
+The negative sign in the gradient means that point $i$ is pulled toward $j$ when $d_{ij} > \delta_{ij}$ (too far) and pushed away when $d_{ij} < \delta_{ij}$ (too close), weighted inversely by the original dissimilarity — so small distances are preserved more faithfully.
+
+:::
+:::
+
+
+## Exercise: Classical MDS implementation in Python
+
+Implement classical MDS (PCoA) from scratch using NumPy and apply it to the Ekman color similarity dataset. The Ekman dataset contains pairwise similarities between 14 spectral colors (wavelengths 434–674 nm), rated by 31 subjects on a 0–4 scale.
+
+1. Starting from a similarity matrix $S$, convert to a dissimilarity matrix using $\delta_{ij} = \sqrt{1 - s_{ij}}$.
+2. Implement the double-centering step and eigendecomposition.
+3. Project onto the first 2 principal coordinates and visualize.
+4. Compare with `sklearn.manifold.MDS` to validate your implementation.
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### Ekman data and dissimilarity conversion
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import MDS
+
+# Ekman similarity matrix (14 colors, upper triangle = similarities in [0,1])
+# Wavelengths from 434 to 674 nm
+wavelengths = [434, 445, 465, 472, 490, 504, 537, 555, 584, 600, 610, 628, 651, 674]
+
+ekman_sim = np.array([
+    [1.00, 0.86, 0.42, 0.42, 0.18, 0.06, 0.07, 0.04, 0.02, 0.07, 0.09, 0.12, 0.13, 0.16],
+    [0.86, 1.00, 0.50, 0.44, 0.22, 0.09, 0.07, 0.07, 0.02, 0.06, 0.07, 0.10, 0.11, 0.12],
+    [0.42, 0.50, 1.00, 0.81, 0.47, 0.17, 0.10, 0.08, 0.01, 0.02, 0.01, 0.05, 0.03, 0.01],
+    [0.42, 0.44, 0.81, 1.00, 0.54, 0.23, 0.14, 0.10, 0.02, 0.02, 0.02, 0.04, 0.03, 0.03],
+    [0.18, 0.22, 0.47, 0.54, 1.00, 0.59, 0.28, 0.20, 0.05, 0.03, 0.02, 0.03, 0.04, 0.04],
+    [0.06, 0.09, 0.17, 0.23, 0.59, 1.00, 0.55, 0.35, 0.08, 0.05, 0.04, 0.04, 0.04, 0.03],
+    [0.07, 0.07, 0.10, 0.14, 0.28, 0.55, 1.00, 0.68, 0.19, 0.09, 0.05, 0.05, 0.04, 0.05],
+    [0.04, 0.07, 0.08, 0.10, 0.20, 0.35, 0.68, 1.00, 0.36, 0.22, 0.13, 0.08, 0.07, 0.06],
+    [0.02, 0.02, 0.01, 0.02, 0.05, 0.08, 0.19, 0.36, 1.00, 0.70, 0.53, 0.30, 0.22, 0.14],
+    [0.07, 0.06, 0.02, 0.02, 0.03, 0.05, 0.09, 0.22, 0.70, 1.00, 0.82, 0.58, 0.37, 0.27],
+    [0.09, 0.07, 0.01, 0.02, 0.02, 0.04, 0.05, 0.13, 0.53, 0.82, 1.00, 0.76, 0.58, 0.32],
+    [0.12, 0.10, 0.05, 0.04, 0.03, 0.04, 0.05, 0.08, 0.30, 0.58, 0.76, 1.00, 0.78, 0.55],
+    [0.13, 0.11, 0.03, 0.03, 0.04, 0.04, 0.04, 0.07, 0.22, 0.37, 0.58, 0.78, 1.00, 0.72],
+    [0.16, 0.12, 0.01, 0.03, 0.04, 0.03, 0.05, 0.06, 0.14, 0.27, 0.32, 0.55, 0.72, 1.00],
+])
+
+# Convert similarities to dissimilarities
+delta = np.sqrt(1 - ekman_sim)
+np.fill_diagonal(delta, 0.0)
+```
+
+### Classical MDS from scratch
+
+```{python}
+def classical_mds(delta, k=2):
+    """
+    Classical MDS (PCoA) from a dissimilarity matrix.
+
+    Parameters
+    ----------
+    delta : (n, n) array of dissimilarities
+    k     : number of dimensions for the embedding
+
+    Returns
+    -------
+    Y : (n, k) array of embedded coordinates
+    eigenvalues : all eigenvalues of the double-centered matrix
+    """
+    n = delta.shape[0]
+    D2 = delta ** 2
+
+    # Double centering
+    J = np.eye(n) - np.ones((n, n)) / n
+    B = -0.5 * J @ D2 @ J
+
+    # Eigendecomposition (sorted descending)
+    eigenvalues, eigenvectors = np.linalg.eigh(B)
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[idx]
+    eigenvectors = eigenvectors[:, idx]
+
+    # Keep positive eigenvalues only for embedding
+    lam_k = np.maximum(eigenvalues[:k], 0)
+    Y = eigenvectors[:, :k] * np.sqrt(lam_k)
+    return Y, eigenvalues
+
+Y_mds, eigenvalues = classical_mds(delta, k=2)
+
+print("Top 5 eigenvalues:", np.round(eigenvalues[:5], 4))
+print("Variance explained by 2D:", f"{eigenvalues[:2].sum() / eigenvalues[eigenvalues > 0].sum():.1%}")
+```
+
+### Visualization
+
+```{python}
+# Map wavelengths to approximate RGB colors for plotting
+def wavelength_to_rgb(wl):
+    """Very rough conversion of wavelength (nm) to an RGB tuple."""
+    if wl < 450:
+        r, g, b = 0.5, 0.0, 1.0
+    elif wl < 490:
+        r, g, b = 0.0, 0.0, 1.0
+    elif wl < 510:
+        r, g, b = 0.0, 1.0, 1.0
+    elif wl < 560:
+        r, g, b = 0.0, 1.0, 0.0
+    elif wl < 590:
+        r, g, b = 1.0, 1.0, 0.0
+    elif wl < 625:
+        r, g, b = 1.0, 0.5, 0.0
+    else:
+        r, g, b = 1.0, 0.0, 0.0
+    return (r, g, b)
+
+colors = [wavelength_to_rgb(w) for w in wavelengths]
+
+fig, ax = plt.subplots(figsize=(7, 6))
+for i, (wl, col) in enumerate(zip(wavelengths, colors)):
+    ax.scatter(Y_mds[i, 0], Y_mds[i, 1], color=col, s=120, edgecolors='k', zorder=3)
+    ax.annotate(f"{wl} nm", (Y_mds[i, 0], Y_mds[i, 1]),
+                textcoords="offset points", xytext=(6, 4), fontsize=8)
+ax.set_xlabel("MDS dimension 1")
+ax.set_ylabel("MDS dimension 2")
+ax.set_title("Classical MDS of Ekman color similarities")
+plt.tight_layout()
+plt.show()
+```
+
+### Validation with scikit-learn
+
+```{python}
+mds_sklearn = MDS(n_components=2, dissimilarity='precomputed', random_state=0, normalized_stress=False)
+Y_sk = mds_sklearn.fit_transform(delta)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+for ax, Y, title in zip(axes, [Y_mds, Y_sk], ["Classical MDS (from scratch)", "sklearn MDS (metric)"]):
+    for i, (wl, col) in enumerate(zip(wavelengths, colors)):
+        ax.scatter(Y[i, 0], Y[i, 1], color=col, s=120, edgecolors='k', zorder=3)
+        ax.annotate(f"{wl}", (Y[i, 0], Y[i, 1]),
+                    textcoords="offset points", xytext=(5, 3), fontsize=8)
+    ax.set_title(title)
+    ax.set_xlabel("Dim 1")
+    ax.set_ylabel("Dim 2")
+plt.tight_layout()
+plt.show()
+```
+
+### Remarks
+
+1. **Double centering** converts the squared dissimilarity matrix into the Gram matrix $B = -\frac{1}{2}JD^2J$, whose eigendecomposition directly yields the embedding.
+2. **Positive eigenvalues only**: when dissimilarities are not perfectly Euclidean, some eigenvalues are negative. Retaining only positive ones gives a valid (if approximate) embedding.
+3. **Circular structure**: the Ekman color data embeds onto a roughly circular arc, reflecting the spectral ordering of wavelengths — colors close in wavelength are similar, and the embedding captures this topology.
+4. **Equivalence with PCA**: on Euclidean data, classical MDS and PCA yield identical embeddings (up to rotation). Here, the non-Euclidean character of the color similarities means the two methods can differ.
+
+:::
+:::

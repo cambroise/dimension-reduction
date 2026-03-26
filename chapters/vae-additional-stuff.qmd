@@ -1,0 +1,39 @@
+# VAE: From Theory to Practice
+
+This chapter bridges the gap between the theoretical foundations of VAEs presented in @sec-vae and their practical implementation. It covers the concrete loss function, common training issues, important variants, and provides a working code example.
+
+
+
+## Why VAE latent spaces are smooth
+
+A key advantage of VAEs over deterministic autoencoders is the **continuity and smoothness** of the latent space.
+
+In a standard autoencoder, the encoder maps each input to a single point in latent space. Nothing prevents the model from placing similar inputs far apart or creating "holes" — regions of latent space that do not correspond to any meaningful output when decoded.
+
+In a VAE, two mechanisms enforce smoothness:
+
+1. **Stochastic encoding**: each input maps to a *distribution* $q_\Phi(\boldsymbol z | \boldsymbol x)$, not a single point. The decoder must reconstruct from any sample drawn from this distribution, forcing it to produce reasonable outputs in a *neighborhood* around the mean.
+
+2. **KL regularization**: the KL term pushes all approximate posteriors toward the prior $\mathcal{N}(\boldsymbol 0, \boldsymbol I)$, preventing the encoder from collapsing distributions to delta functions and ensuring that the posteriors of different data points overlap.
+
+As a result, interpolating between two points in the VAE latent space produces smooth transitions in the decoded output — a property exploited for data generation and exploration.
+
+## Posterior collapse
+
+**Posterior collapse** is a common failure mode in VAE training where the model ignores the latent variables: the approximate posterior $q_\Phi(\boldsymbol z | \boldsymbol x)$ collapses to the prior $p(\boldsymbol z)$ for all $\boldsymbol x$, meaning $\boldsymbol z$ carries no information about $\boldsymbol x$.
+
+### Why it happens
+
+When the decoder is powerful enough (e.g. an autoregressive model), it can model $p(\boldsymbol x)$ well without using $\boldsymbol z$. Since the KL term in the loss penalizes any deviation of $q_\Phi$ from the prior, the optimizer finds it easier to set $q_\Phi(\boldsymbol z | \boldsymbol x) \approx p(\boldsymbol z)$ and let the decoder do all the work.
+
+### Mitigation strategies
+
+- **KL annealing**: start training with a low weight on the KL term and gradually increase it to 1.
+- **Free bits**: enforce a minimum amount of information per latent dimension by modifying the KL term:
+  $D_{KL}^{\text{free}} = \sum_j \max(\lambda, D_{KL,j})$
+- **Use a less powerful decoder**: e.g. a simple MLP instead of an autoregressive model.
+
+
+## VAE implementation
+
+A complete VAE implementation with training and visualization is provided in the exercises chapter.

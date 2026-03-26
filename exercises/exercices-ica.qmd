@@ -1,0 +1,273 @@
+# Exercices on independent component analyses
+
+
+## Exercice: Gaussian distribution and entropy
+
+Show that among all continuous distributions with a given variance, the Gaussian distribution has the largest differential entropy.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}    
+We want to show that for a random variable $X$ with variance $\sigma^2$, the differential entropy $H(X)$ is maximized when $X$ follows a Gaussian distribution.
+The differential entropy of a continuous random variable $X$ with probability density function $p(x)$ is defined as:
+$$
+H(X) = -\int p(x) \log p(x) \, dx.
+$$
+To prove that the Gaussian distribution maximizes the entropy for a given variance, we can use the method of Lagrange multipliers. We want to maximize $H(X)$ subject to the constraints that the variance is fixed:
+1. $\int p(x) \, dx = 1$ (normalization constraint)
+2. $\int x^2 p(x) \, dx = \sigma^2$ (variance constraint)
+We set up the Lagrangian:
+$$
+\mathcal{L} = -\int p(x) \log p(x) \, dx + \lambda_1 \left( \int p(x) \, dx - 1 \right) + \lambda_2 \left( \int x^2 p(x) \, dx - \sigma^2 \right).
+$$
+Taking the functional derivative of $\mathcal{L}$ with respect to $p(x)$ and setting it to zero gives:
+$$
+-\log p(x) - 1 + \lambda_1 + \lambda_2 x^2 = 0.
+$$
+Solving for $p(x)$, we find:
+$$
+p(x) = \exp(\lambda_1 - 1) \exp(-\lambda_2 x^2).
+$$
+This is the form of a Gaussian distribution. The constants $\lambda_1$ and $\lambda_2$ can be determined by enforcing the normalization and variance constraints. Thus, we conclude that the Gaussian distribution maximizes the differential entropy for a given variance.
+:::
+::: 
+
+
+
+
+## Exercice: Orthogonality of the mixing matrix in ICA
+
+Show that for centered and whitened data, the maximum likelihood estimate of the ICA model leads to an orthogonal mixing matrix.
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+
+For centered and whitened data, we have
+$$\mathbb E[\boldsymbol x \boldsymbol x^t]=I=\boldsymbol W \mathbb E[\boldsymbol z \boldsymbol z^T]\boldsymbol W^T =\boldsymbol W \boldsymbol W^T$$
+hence we see that $\boldsymbol W$ must be orthogonal. This reduces the number of parameters we have to estimate from $D^2$ to $D(D - 1)/2$.
+
+:::
+:::
+
+
+
+
+
+
+## Exercice: Blind source separation with ICA
+
+Each question below can be implemented in R or Python, using the FastICA algorithm from the `fastICA` package in R or `sklearn.decomposition.FastICA` in Python. Illustrate your results with appropriate plots.
+
+
+1.  Simulate three independent source signals:
+- A sinusoidal signal
+- A square wave signal
+- A heavy-tailed noise signal (e.g., Student's t-distribution with low degrees of freedom)
+
+2. Mix these sources using a  the following mixing matrix:
+$$
+\boldsymbol A = \begin{pmatrix}1 & 1 & 1 \\ 0.5 & 2 & 1 \\ 1.5 & 1 & 2\end{pmatrix}
+$$
+
+3. Apply the FastICA algorithm to the mixed signals to recover the independent components.
+
+
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+###  fastICA in R
+
+
+```{r}
+library(ggplot2)
+library(fastICA)
+
+set.seed(123)
+n <- 2000
+t <- seq(0, 8*pi, length.out = n)
+
+S <- cbind(
+  t,
+  S1=sin(t),                 # sinusoidal
+  S2=sign(sin(3 * t)),       # square wave
+  S3=rt(n,df=5)                   # heavy-tailed noise
+)
+
+S_df <- as.data.frame(S)
+
+S_long <- data.frame(
+  t = S_df$t,
+  value = c(S_df$S1, S_df$S2, S_df$S3),
+  source = factor(
+    rep(c("Source 1: Sinusoidal",
+          "Source 2: Square wave",
+          "Source 3: Heavy-tailed noise"),
+        each = n)
+  )
+)
+ggplot(S_long, aes(x = t, y = value)) +
+  geom_line() +
+  facet_wrap(~ source, ncol = 1, scales = "free_y") +
+  labs(x = "Time", y = "Amplitude") +
+  theme_minimal()
+
+
+
+
+S <- S[, -1]  # remove time
+S <- scale(S)  # standardization
+# mix the sources
+A <- matrix(c(1, 1, 1,
+              0.5, 2, 1,
+              1.5, 1, 2),
+            nrow = 3, byrow = TRUE)
+
+X <- S %*% t(A)
+
+ggplot(data.frame(t = rep(t, 3),
+                     value = c(X[,1], X[,2], X[,3]),
+                     sensor = factor(
+                       rep(c("Sensor 1", "Sensor 2", "Sensor 3"),
+                           each = n)
+                     )),
+       aes(x = t, y = value, color = sensor)) +
+  geom_line() +
+  facet_wrap(~ sensor, ncol = 1, scales = "free_y") +
+  labs(x = "Time", y = "Amplitude") +
+  theme_minimal()   
+
+
+
+
+# apply ICA 
+ica <- fastICA(X, n.comp = 3)
+Sica<-data.frame(t=t,ica$S)
+Sica_long=data.frame(
+  t = rep(Sica$t, 3),
+  value = c(Sica$X1, Sica$X2, Sica$X3),
+  source = factor(
+    rep(c("Independent Component 1",
+          "Independent Component 2",
+          "Independent Component 3"),
+        each = n)
+  )
+)
+
+ggplot(Sica_long, aes(x = t, y = value, color = source)) +
+  geom_line() +
+  facet_wrap(~ source, ncol = 1, scales = "free_y") +
+  labs(x = "Time", y = "Amplitude") +
+  theme_minimal()
+
+```
+
+
+:::
+:::
+
+
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+
+###  fastICA in python
+
+
+```{python}
+# === ICA demo: sources → mixing → FastICA → recovery ===
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import t as student_t
+from sklearn.decomposition import FastICA
+
+# Setup
+np.random.seed(123)
+sns.set_theme(style="whitegrid")
+
+# Generate independent sources
+n = 2000
+t = np.linspace(0, 8*np.pi, n)
+
+S = np.column_stack([
+    np.sin(t),                    # Source 1: sinusoidal
+    np.sign(np.sin(3 * t)),        # Source 2: square wave
+    student_t.rvs(df=5, size=n)    # Source 3: heavy-tailed noise
+])
+
+# Standardize sources
+S = (S - S.mean(axis=0)) / S.std(axis=0)
+
+# Plot true sources
+S_df = pd.DataFrame({
+    "t": np.tile(t, 3),
+    "value": np.concatenate([S[:,0], S[:,1], S[:,2]]),
+    "source": np.repeat([
+        "Source 1: Sinusoidal",
+        "Source 2: Square wave",
+        "Source 3: Heavy-tailed noise"
+    ], n)
+})
+
+g = sns.FacetGrid(S_df, row="source", sharey=False, height=2.5, aspect=3);
+g.map_dataframe(sns.lineplot, x="t", y="value");
+g.set_axis_labels("Time", "Amplitude")
+
+# Mixing matrix
+A = np.array([
+    [1,   1, 1],
+    [0.5, 2, 1],
+    [1.5, 1, 2]
+])
+
+# Mix sources
+X = S @ A.T
+
+# Plot observed signals
+X_df = pd.DataFrame({
+    "t": np.tile(t, 3),
+    "value": np.concatenate([X[:,0], X[:,1], X[:,2]]),
+    "sensor": np.repeat([
+        "Sensor 1",
+        "Sensor 2",
+        "Sensor 3"
+    ], n)
+})
+
+g = sns.FacetGrid(X_df, row="sensor", sharey=False, height=2.5, aspect=3);
+g.map_dataframe(sns.lineplot, x="t", y="value");
+g.set_axis_labels("Time", "Amplitude")
+
+# Apply FastICA
+ica = FastICA(n_components=3, random_state=123)
+S_ica = ica.fit_transform(X)
+
+# Plot recovered independent components
+Sica_df = pd.DataFrame({
+    "t": np.tile(t, 3),
+    "value": np.concatenate([S_ica[:,0], S_ica[:,1], S_ica[:,2]]),
+    "component": np.repeat([
+        "Independent Component 1",
+        "Independent Component 2",
+        "Independent Component 3"
+    ], n)
+})
+
+g = sns.FacetGrid(Sica_df, row="component", sharey=False, height=2.5, aspect=3);
+g.map_dataframe(sns.lineplot, x="t", y="value");
+g.set_axis_labels("Time", "Amplitude");
+None  
+```
+:::
+:::
+
+
+
+

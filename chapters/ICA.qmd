@@ -1,0 +1,543 @@
+# Independent Component analysis 
+
+Independent component analysis attempts to decompose a multivariate signal into 
+
+- independent 
+- non-Gaussian signals. 
+
+:::{.callout-note title="Outline"}
+
+
+In this chapter we will:
+
+1. Illustrate ICA through the cocktail party problem.
+2. Introduce the ICA generative model and its ambiguities.
+3. Explain preprocessing: centering and whitening.
+4. Derive ICA from a maximum likelihood perspective.
+5. Show how non-Gaussianity leads to contrast functions.
+6. Derive FastICA as a fixed-point algorithm.
+:::
+
+
+
+
+
+## Cocktail party problem
+
+### The cocktail party problem
+
+The cocktail party problem illustrates the goal of Independent Component Analysis (ICA). 
+
+Several microphones record simultaneous mixtures of multiple speakers talking in the same room, but only the mixed signals are observed. 
+
+Assuming that the original sources are statistically independent and non-Gaussian, ICA aims to recover the individual source signals by finding linear projections of the observed data that maximize non-Gaussianity.
+
+The number of microphones must be at least equal to the number of sources for ICA to work effectively.
+
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(ggplot2)
+library(fastICA)
+
+set.seed(123)
+n <- 2000
+t <- seq(0, 8*pi, length.out = n)
+
+S <- cbind(
+  t,
+  S1=sin(t),                 # sinusoidal
+  S2=sign(sin(3 * t)),       # square wave
+  S3=rt(n,df=5)                   # heavy-tailed noise
+)
+
+S_df <- as.data.frame(S)
+
+S_long <- data.frame(
+  t = S_df$t,
+  value = c(S_df$S1, S_df$S2, S_df$S3),
+  source = factor(
+    rep(c("Source 1: Sinusoidal",
+          "Source 2: Square wave",
+          "Source 3: Heavy-tailed noise"),
+        each = n)
+  )
+)
+ggplot(S_long, aes(x = t, y = value)) +
+  geom_line() +
+  facet_wrap(~ source, ncol = 1, scales = "free_y") +
+  labs(
+    x = "Time",
+    y = "Amplitude",
+    caption = "Figure: Three independent source signals (sinusoid, square wave, heavy-tailed noise)."
+  ) +
+  theme_minimal()
+
+
+
+
+S <- S[, -1]  # remove time
+S <- scale(S)  # standardization
+# mix the sources
+A <- matrix(c(1, 1, 1,
+              0.5, 2, 1,
+              1.5, 1, 2),
+            nrow = 3, byrow = TRUE)
+
+X <- S %*% t(A)
+
+ggplot(data.frame(t = rep(t, 3),
+                     value = c(X[,1], X[,2], X[,3]),
+                     sensor = factor(
+                       rep(c("Sensor 1", "Sensor 2", "Sensor 3"),
+                           each = n)
+                     )),
+       aes(x = t, y = value, color = sensor)) +
+  geom_line() +
+  facet_wrap(~ sensor, ncol = 1, scales = "free_y") +
+  labs(
+    x = "Time",
+    y = "Amplitude",
+    caption = "Figure: Observed mixtures at the three sensors after linear mixing."
+  ) +
+  theme_minimal()   
+
+
+
+
+# apply ICA 
+ica <- fastICA(X, n.comp = 3)
+Sica<-data.frame(t=t,ica$S)
+Sica_long=data.frame(
+  t = rep(Sica$t, 3),
+  value = c(Sica$X1, Sica$X2, Sica$X3),
+  source = factor(
+    rep(c("Independent Component 1",
+          "Independent Component 2",
+          "Independent Component 3"),
+        each = n)
+  )
+)
+
+ggplot(Sica_long, aes(x = t, y = value, color = source)) +
+  geom_line() +
+  facet_wrap(~ source, ncol = 1, scales = "free_y") +
+  labs(
+    x = "Time",
+    y = "Amplitude",
+    caption = "Figure: Estimated independent components recovered by FastICA."
+  ) +
+  theme_minimal()
+
+```
+
+
+
+## ICA Historical context (French Wikipedia)
+
+### Blind source separation
+
+The first formulation  was carried out in 1984 by Jeanny Hérault and Bernard Ans, two researchers in neuroscience and signal processing, to model in the form of a neuromimetic network self-adaptive encoding and decoding of movement in humans. 
+
+### France and Finland
+
+  - The French signal processing community adopted a statistical formalism 
+  - While Finnish researchers aimed to extend principal component analysis by means of a connectionist formalism (1985)
+
+### Formalisation
+
+  - A first formalism of the blind source separation problem, as well as an algorithm making it possible to obtain a solution, was proposed by C. Jutten and J. Hérault in 1991.
+  - Mathematical formalization in the simplest case  was carried out in 1994 by P. Comon
+  
+## ICA Model {.allowframebreaks}
+
+Let $\boldsymbol x_t \in \mathbb R^D$ be the observed signal at the sensors at time $t$, and $\boldsymbol z_t \in \mathbb R^L$ be the vector of source signals:
+
+$$
+\boldsymbol x_t = \boldsymbol W\boldsymbol z_t + \boldsymbol \epsilon_t
+$$
+
+  - $\boldsymbol W$ is an $D\times L$ matrix, 
+  - $\boldsymbol \epsilon_t  \sim \mathcal N (0, \boldsymbol \Psi)$. 
+
+The model is identical to factor analysis. 
+
+However, we will use a **different prior** for $p(\boldsymbol z_t)$. 
+
+
+In the classical formulation the noise term is often omitted.
+
+In FA, we assume all sources are uncorrelated, and has a Gaussian distribution. In this Gaussian case, the model is not identifiable: any orthogonal transformation of the sources yields an equivalent solution.
+
+
+
+###  Relax this Gaussian assumption on latent variables (sources)
+
+ICA assumes independence, which is stronger than uncorrelatedness,
+
+$$
+p(\boldsymbol z_t) = \prod_j p_j(z_{tj}).
+$$
+
+
+
+### Identifiability and ICA ambiguities
+
+Two fundamental ambiguities remain even with perfect estimation:
+
+- **Scaling/sign ambiguity**: if one source is scaled by a constant and the corresponding column of $\boldsymbol W$ is rescaled inversely, the mixture $\boldsymbol x$ is unchanged. Thus, source variances cannot be identified. A common convention is to fix each source to have unit variance, leaving only a sign ambiguity.
+- **Permutation ambiguity**: the order of sources is not identifiable. Any permutation of components yields an equivalent model.
+
+
+
+
+### Additionnal assumptions
+
+  - Without loss of generality the variance of the source distributions is contrained to unity
+  - W is assumed square and hence invertible.
+  
+
+
+## Preprocessing: centering and whitening
+
+ICA is almost always preceded by preprocessing, which simplifies the estimation.
+
+### Centering
+
+Subtract the mean so that $\mathbb E[\boldsymbol x]=0$. This makes the model zero-mean and simplifies equations. After estimation, the original mean can be recovered.
+
+### Whitening
+
+Transform $\boldsymbol x$ so that its components are uncorrelated and have unit variance:
+
+$$
+\mathbb E[\tilde{\boldsymbol x}\,\tilde{\boldsymbol x}^T] = \boldsymbol I.
+$$
+
+Using the eigenvalue decomposition of the covariance $\mathbb E[\boldsymbol x\boldsymbol x^T]=\boldsymbol E\boldsymbol D\boldsymbol E^T$, a whitening transform is
+
+$$
+\tilde{\boldsymbol x} = \boldsymbol D^{-1/2}\boldsymbol E^T\boldsymbol x.
+$$
+
+Whitening turns the mixing matrix into an orthogonal matrix, which reduces the number of parameters to estimate and simplifies the optimization landscape.
+
+
+
+## Maximum likelihood estimation of ICA {.allowframebreaks}
+
+
+If the data is centered and whitened, we have 
+
+$$\mathbb E[\boldsymbol x \boldsymbol x^t]=I=\boldsymbol W \mathbb E[\boldsymbol z \boldsymbol z^T]\boldsymbol W^T =\boldsymbol W \boldsymbol W^T$$ also have
+
+Hence we see that $\boldsymbol W$ must be orthogonal. 
+This reduces the number of parameters we have to estimate from $D^2$ to $D(D - 1)/2$. 
+
+
+### Recognition weights/Generative weights
+
+Let $\boldsymbol V = \boldsymbol W^{-1}$ these are often called the recognition weights, as opposed to $\boldsymbol W$, which are the generative weights
+
+### Log-likelihood
+
+Since $\boldsymbol x = \boldsymbol W \boldsymbol z$, we have
+
+$$
+p_x(\boldsymbol W \boldsymbol z_t) = p_z(\boldsymbol z_t) |det(\boldsymbol W^{-1})| = p_z(\boldsymbol V \boldsymbol x_t)|det(\boldsymbol V)|
+$$
+
+The log -likelihood of the data (on the whole population) is therefore 
+
+$$
+\ell(\boldsymbol V)
+= \log |\det \boldsymbol V| + \mathbb E\left[\sum_{j=1}^D \log p_j(y_j)\right],
+\qquad y_j=\boldsymbol v_j^\top \boldsymbol x.
+$$
+
+
+
+## ICA gradient ascent
+
+
+### Notation 
+
+- Data point: $\boldsymbol x \in \mathbb R^D$ (assume centered and whitened, so $\mathbb E[\boldsymbol x]=0$ and $\mathbb E[\boldsymbol x\boldsymbol x^\top]=I$).
+- Demixing matrix: $\boldsymbol V \in \mathbb R^{D\times D}$, rows $\boldsymbol v_j^\top$.
+- Component (projection): 
+$$
+y_j = \boldsymbol v_j^\top \boldsymbol x,\qquad \boldsymbol y = \boldsymbol V\boldsymbol x.
+$$
+
+**Remark:**  
+
+- $g(\cdot)$ below is a *scalar nonlinearity*, applied componentwise to $\boldsymbol y$.
+
+### Log-likelihood objective (generic ICA)
+
+Assume independent sources with densities $p_j$:
+$$
+\ell(\boldsymbol V)
+= \log |\det \boldsymbol V| + \mathbb E\left[\sum_{j=1}^D \log p_j(y_j)\right],
+\qquad y_j=\boldsymbol v_j^\top \boldsymbol x.
+$$
+
+Define the **score function** (derivative of log-density):
+$$
+g_j(y_j) \;=\; \frac{d}{dy_j}\log p_j(y_j).
+$$
+
+Thus 
+$$
+\boldsymbol g(\boldsymbol y)=\big(g_1(y_1),\dots,g_D(y_D)\big)^\top.
+$$
+where $\boldsymbol g(\boldsymbol y)$ is the vector of score functions applied componentwise to $\boldsymbol y=\boldsymbol V\boldsymbol x$.
+
+
+### Plain gradient (batch form)
+
+The gradient of $\ell(\boldsymbol V)$ is
+$$
+\nabla_{\boldsymbol V}\,\ell(\boldsymbol V)
+= sign(det(V)) \boldsymbol V^{-\top} + \mathbb E\!\left[\boldsymbol g(\boldsymbol y)\,\boldsymbol x^\top\right],
+\qquad \boldsymbol y=\boldsymbol V\boldsymbol x.
+$$
+
+Two remarks:
+
+- $\boldsymbol V$ is orhtogonal after whitening, $\boldsymbol V^{-\top}=\boldsymbol V$.
+-  The $sign(det(V))$ term is often dropped in practice, as it does not affect the direction of the gradient. Thus,  the  **gradient ascent** step is
+
+$$
+\boldsymbol V \leftarrow \boldsymbol V
++ \eta\left(\boldsymbol V + \mathbb E[\boldsymbol g(\boldsymbol V\boldsymbol x)\,\boldsymbol x^\top]\right),
+$$
+where $\eta>0$ is the learning rate.
+
+### Online (one-sample) approximation
+
+Replacing $\mathbb E[\cdot]$ by a single sample $(\boldsymbol x)$ gives:
+$$
+\boldsymbol V \leftarrow \boldsymbol V
++ \eta\left(\boldsymbol V + \boldsymbol g(\boldsymbol V\boldsymbol x)\,\boldsymbol x^\top\right).
+$$
+
+### Practical note: whitening and orthogonality constraint
+
+After whitening, one typically **constrains** $\boldsymbol V$ to be orthogonal:
+$$
+\boldsymbol V\boldsymbol V^\top = I,
+$$
+and then $\log|\det\boldsymbol V|$ is constant (often dropped).
+
+In practice, we enforce the constraint by **re-orthogonalizing** $\boldsymbol V$ after an update
+(e.g., symmetric decorrelation).
+
+
+
+A central question is how to choose the nonlinearity $\boldsymbol g$ (or equivalently the source densities $p_j$) to achieve good performance and convergence properties. This leads us to measures of non-Gaussianity, which are crucial for ICA estimation.
+
+
+
+
+## Measures of non-Gaussianity (contrast functions)
+
+ICA estimation is transformed into an optimization problem by choosing a measure of non-Gaussianity (a **contrast function**). 
+
+### Kurtosis
+
+For a zero-mean, unit-variance variable $y$, kurtosis is
+
+$$
+\text{kurt}(y) = \mathbb E[y^4] - 3.
+$$
+
+- **Gaussian variables have zero kurtosis**.
+- **Super-Gaussian** distributions have positive kurtosis (spiky, heavy-tailed).
+- **Sub-Gaussian** distributions have negative kurtosis (flat distributions).
+
+Kurtosis is simple and has additive properties for independent variables, but it is sensitive to outliers, making it less robust in practice.
+
+### Negentropy
+
+Negentropy uses information theory. Differential entropy is maximized by a Gaussian distribution for fixed covariance, so a measure of non-Gaussianity is
+
+$$
+J(y) = H(y_{\text{gauss}}) - H(y) \ge 0.
+$$
+
+Negentropy is zero iff the distribution is Gaussian. It is theoretically well-justified but hard to compute directly, so we rely to approximations.
+
+### Approximations of negentropy
+
+A practical approximation uses 
+
+$$
+J(y) \approx \left(\mathbb E[G(y)] - \mathbb E[G(\nu)]\right)^2,\quad \nu\sim\mathcal N(0,1).
+$$
+
+Common choices include:
+
+- $G(u)=\log\cosh(u)$ for robustness with super-Gaussian sources.
+- $G(u)=-\exp(-u^2/2)$ for sub-Gaussian sources.
+
+
+### Common choice of nonlinearity (example)
+
+:::{.callout-note title="log cosh nonlinearity"}
+thus for a  super-Gaussian prior:
+$$
+G(u)=\log\cosh(u),\qquad g(u)=G'(u)=\tanh(u).
+$$
+:::
+
+## From gradient ascent to a fixed-point strategy (FastICA)
+
+The gradient ascent approach derived above is statistically correct but leads to a
+slow algorithm due to the presence of matrix inverses and the need to tune a learning rate.
+FastICA overcomes these difficulties by **directly solving the stationarity condition**
+of the likelihood using a **fixed-point iteration**.
+
+### Stationarity condition (one component)
+
+Consider a single row $\boldsymbol v^\top$ of the demixing matrix $\boldsymbol V$,
+and assume the data are centered and whitened:
+$$
+\mathbb E[\boldsymbol x] = 0,
+\qquad
+\mathbb E[\boldsymbol x\boldsymbol x^\top] = I.
+$$
+
+We seek to maximize the contrast
+$$
+J(\boldsymbol v)
+=
+\mathbb E\big[ G(\boldsymbol v^\top \boldsymbol x) \big]
+\quad
+\text{subject to }
+\boldsymbol v^\top \boldsymbol v = 1,
+$$
+where $g(u)=G'(u)$.
+
+Introducing a Lagrange multiplier $\lambda$, the stationarity condition is
+$$
+\nabla_{\boldsymbol v}
+\left(
+\mathbb E[G(\boldsymbol v^\top \boldsymbol x)]
+-
+\lambda(\boldsymbol v^\top \boldsymbol v - 1)
+\right)
+= 0,
+$$
+which yields
+$$
+\mathbb E[\boldsymbol x\, g(\boldsymbol v^\top \boldsymbol x)]
+=
+2\lambda \boldsymbol v.
+$$
+
+This equation already has the form of a **fixed-point condition**:
+the optimal direction $\boldsymbol v$ is proportional to
+$\mathbb E[\boldsymbol x\, g(\boldsymbol v^\top \boldsymbol x)]$.
+
+
+This can be rewritten as 
+
+$$\boldsymbol{v} = h(\boldsymbol{v}) \equiv \frac{1}{2\lambda} \mathbb{E}[\boldsymbol{x} \, g(\boldsymbol{v}^\top \boldsymbol{x})]$$
+
+Let us Define **the Residual Function**
+
+$$R(\boldsymbol{v}) = \boldsymbol{v} - h(\boldsymbol{v}) = \boldsymbol{v} - \frac{1}{2\lambda} \mathbb{E}[\boldsymbol{x} \, g(\boldsymbol{v}^\top \boldsymbol{x})]$$
+
+We want to find $\boldsymbol{v}^*$ such that $R(\boldsymbol{v}^*) = \boldsymbol{0}$.
+
+We construct an **objective function**
+
+$$F(\boldsymbol{v}) = \frac{1}{2}\|R(\boldsymbol{v})\|^2 = \frac{1}{2}\left\|\boldsymbol{v} - \frac{1}{2\lambda} \mathbb{E}[\boldsymbol{x} \, g(\boldsymbol{v}^\top \boldsymbol{x})]\right\|^2$$
+
+and compute the gradient of $F$:
+
+$$\nabla_{\boldsymbol{v}} F(\boldsymbol{v}) = (I - J_h(\boldsymbol{v}))^\top R(\boldsymbol{v})$$
+
+where $J_h(\boldsymbol{v})$ is the Jacobian of $h(\boldsymbol{v})$.
+
+**Computing the Jacobian:**
+
+$$J_h(\boldsymbol{v}) = \frac{\partial h}{\partial \boldsymbol{v}} = \frac{1}{2\lambda} \frac{\partial}{\partial \boldsymbol{v}} \mathbb{E}[\boldsymbol{x} \, g(\boldsymbol{v}^\top \boldsymbol{x})]$$
+
+Using the chain rule:
+
+$$J_h(\boldsymbol{v}) = \frac{1}{2\lambda} \mathbb{E}[\boldsymbol{x} \, g'(\boldsymbol{v}^\top \boldsymbol{x}) \boldsymbol{x}^\top]$$
+
+Under the **whitening assumption** $\mathbb{E}[\boldsymbol{x}\boldsymbol{x}^\top] = I$:
+
+$$J_h(\boldsymbol{v}) \approx \frac{1}{2\lambda} \mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})] \, I$$
+
+Newton's method for minimizing $F(\boldsymbol{v})$ gives:
+
+$$\boldsymbol{v}_{k+1} = \boldsymbol{v}_k - [H_F(\boldsymbol{v}_k)]^{-1} \nabla_{\boldsymbol{v}} F(\boldsymbol{v}_k)$$
+
+Using the **Gauss-Newton approximation** for the Hessian:
+
+$$H_F(\boldsymbol{v}) \approx (I - J_h(\boldsymbol{v}))^\top (I - J_h(\boldsymbol{v}))$$
+
+Substituting our Jacobian approximation:
+
+$$H_F(\boldsymbol{v}) \approx \left(I - \frac{1}{2\lambda}\mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})]I\right)^\top \left(I - \frac{1}{2\lambda}\mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})]I\right)$$
+
+$$= \left(1 - \frac{1}{2\lambda}\mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})]\right)^2 I$$
+
+
+The Newton iteration becomes:
+
+$$\boldsymbol{v}_{k+1} = \boldsymbol{v}_k - \frac{1}{\left(1 - \frac{1}{2\lambda}\mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})]\right)^2} \left(1 - \frac{1}{2\lambda}\mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})]\right) R(\boldsymbol{v}_k)$$
+
+Simplifying:
+
+$$\boldsymbol{v}_{k+1} = \boldsymbol{v}_k - \frac{1}{1 - \frac{1}{2\lambda}\mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})]} R(\boldsymbol{v}_k)$$
+
+**Absorbing the Lagrange Multiplier**
+
+Since we enforce $\|\boldsymbol{v}\| = 1$ by normalization after each step, we can absorb the constant $2\lambda$ into the iteration. Setting the iteration to directly solve:
+
+$$\boldsymbol{v}_{k+1} = \mathbb{E}[\boldsymbol{x} \, g(\boldsymbol{v}_k^\top \boldsymbol{x})] - \mathbb{E}[g'(\boldsymbol{v}_k^\top \boldsymbol{x})] \boldsymbol{v}_k$$
+
+The final FastICA update becomes:
+
+$$\boxed{\boldsymbol{v} \leftarrow \mathbb{E}[\boldsymbol{x} \, g(\boldsymbol{v}^\top \boldsymbol{x})] - \mathbb{E}[g'(\boldsymbol{v}^\top \boldsymbol{x})] \boldsymbol{v}}$$
+
+Followed by normalization:
+
+$$\boxed{\boldsymbol{v} \leftarrow \frac{\boldsymbol{v}}{\|\boldsymbol{v}\|}}$$
+
+### Remarks on FastICA derivation
+
+1. **From residual minimization to fixed-point**: The framework $F(x) = \frac{1}{2}\|x - h(x)\|^2$ transforms the stationarity condition into an optimization problem.
+
+2. **Newton acceleration**: Rather than simple gradient descent, Newton's method uses second-order information (Hessian) for faster convergence.
+
+3. **Whitening simplification**: The whitening assumption allows the Jacobian to be approximated as a scalar multiple of identity, greatly simplifying the Hessian.
+
+4. **No learning rate needed**: Unlike gradient descent, the Newton update has an adaptive step size built in, eliminating the need for hyperparameter tuning.
+
+
+
+:::{.callout-note title="FastICA algorithm for one component"}
+
+1. Center and whiten the data.
+2. Initialize $\boldsymbol v$ with $\|\boldsymbol v\|=1$.
+3. Repeat until convergence:
+   $$
+   \boldsymbol v \leftarrow
+   \mathbb E[\boldsymbol x g(\boldsymbol v^\top \boldsymbol x)]
+   -
+   \mathbb E[g'(\boldsymbol v^\top \boldsymbol x)]\boldsymbol v
+   $$
+   $$
+   \boldsymbol v \leftarrow \boldsymbol v / \|\boldsymbol v\|
+   $$
+4. Output $\boldsymbol z = \boldsymbol v^\top \boldsymbol x$.
+:::

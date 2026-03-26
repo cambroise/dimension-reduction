@@ -1,0 +1,63 @@
+---
+title: "Multidimensional Scaling"
+subtitle: "Dimensionality Reduction"
+author:
+  - name: Christophe Ambroise
+    orcid: 0000-0002-8148-0346
+    email: christophe.ambroise@univ-evry.fr
+    affiliations: UEVE, UMR CNRS 8071
+date: last-modified
+params:
+  solution: true
+
+execute:
+  echo: true
+  warning: true
+  error: true
+format:
+  revealjs:
+    theme: white
+    html-math-method: mathjax
+    scrollable: true
+    transition: convex
+    embed-resources: true
+    echo: false
+    width: 2400
+    height: 1350
+    margin: 0.1
+    min-scale: 0.2
+    max-scale: 2.0
+
+  pdf:
+    number-sections: true
+    toc: true
+    toc-depth: 2
+    number-depth: 2
+    documentclass: scrartcl
+    mainfont: "Times New Roman"
+    fontsize: 11pt
+
+  beamer:
+    slide-level: 2
+    aspectratio: 169
+    theme: Madrid
+    colortheme: dolphin
+    header-includes: |
+      \usepackage{xcolor}
+      \definecolor{UEVEblue}{RGB}{65,89,122}
+      \definecolor{UEVEorange}{RGB}{217,97,37}
+      \setbeamercolor{frametitle}{bg=UEVEblue, fg=white}
+      \setbeamercolor{palette primary}{bg=UEVEblue,fg=white}
+      \setbeamercolor{palette secondary}{bg=UEVEblue,fg=white}
+      \setbeamercolor{palette tertiary}{bg=UEVEblue,fg=white}
+      \setbeamercolor{palette quaternary}{bg=UEVEblue,fg=white}
+      \setbeamercolor{structure}{fg=UEVEorange}
+      \setbeamercolor{section in toc}{fg=UEVEblue}
+    fonttheme: professionalfonts
+---
+
+{{< include ../chapters/mds.qmd >}}
+{{< include ../exercises/exercices-mds.qmd >}}
+{{< include ../chapters/t-SNE.qmd >}}
+
+

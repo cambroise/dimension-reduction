@@ -1,0 +1,289 @@
+# t-SNE
+
+
+Variation of Stochastic Neighbor Embedding 
+
+- easier to optimize, 
+- produces significantly better visualizations by reducing the tendency 
+- scalable: for very large data sets,  t-SNE can use random walks on neighborhood graphs 
+
+## Stochastic Neighbor Embedding 
+
+Stochastic Neighbor Embedding (SNE) converts distances into
+conditional probabilities that represent similarities
+
+### Conditional probabilities $p_{j|i}$
+$$
+p_{j|i} = \frac{\exp(-\|x_i - x_j\|^2/(2\sigma_i^2))}{\sum_{k\neq i} \exp(-\|x_i
+- x_k\|^2 / 2 \sigma_i^2)}\,.
+$$ 
+
+### Interpretation
+
+Probability that $x_i$ would pick $x_j$ as its neighbor
+if neighbors were picked in proportion to their probability density
+under a Gaussian centered at $x_i$: 
+
+
+## Stochastic Neighbor Embedding 
+
+similar conditional probability between the $y_i$, which we denote
+by $q_{j|i}$. 
+
+### Conditional probabilities, $q_{j|i}$
+
+$$
+q_{j|i} = \frac{\exp(-\|y_i - y_j\|^2)}{\sum_{k \neq i} \exp(-\|y_i
+-y_k\|^2)}\,.
+$$
+with
+$q_{i|i}=0$.
+
+###  SNE can also be applied directly to similarity data 
+provided  similarities can be
+  interpreted as conditional probabilities
+ we set
+
+
+##  Cost function
+
+A natural measure of the faithfulness with
+which $q_{j|i}$ models $p_{j|i}$ is the Kullback-Leibler divergence (equal to the cross-entropy up to an additive constant). 
+
+$$
+C = \sum_i KL(P_i\|Q_i) = \sum_i \sum_j p_{j|i} \log
+\frac{p_{j|i}}{q_{j|i}}\,,
+$$ 
+
+the SNE cost function focuses on
+retaining the local structure of the data in the map (for *reasonable
+values of the variance* of the Gaussian in the high-dimensional space).
+
+
+## Selecting the variance $\sigma_i$
+
+SNE performs a binary search for the value of $\sigma_i$ that produces a $P_i$ with a fixed perplexity that is specified by the user 
+
+### Perplexity 
+$$
+Perp(P_i) = 2^{H(P_i)}\,,
+$$
+where $H(P_i)$ is the Shannon entropy of $P_i$ measured in bits
+
+$$
+H(P_i) = - \sum_j p_{j|i} \log_2 p_{j|i}\,.
+$$
+
+### Remarks 
+
+- the perplexity increases monotonically with the variance
+  $\sigma_i$
+- smooth measure of the effective number
+of neighbors
+- Typical values are between 5 and 50.
+
+
+
+## Gradient descent
+
+### Gradient
+$$
+\frac{\partial C}{\partial y_i} = 2 \sum_j (p_{j|i} - q_{j|i} + p_{i|j} -
+q_{i|j})(y_i - y_j)\,.
+$$
+
+### Interpretation
+
+The gradient may be interpreted as the resultant force created by
+a *set of springs* between the map point $y_i$ and all other map points $y_j$.
+
+-  force exerted by the spring between $y_i$ and $y_j$ is proportional to its length
+- also proportional to its stiffness $(p_{j|i} -
+q_{j|i} + p_{i|j} + q_{i|j})$ 
+
+### Initialisation
+
+$n$ points randomly sampled from an
+isotropic Gaussian with small variance that is centered around the origin
+
+## Gradient in practice
+
+- To speed up the optimization and to avoid poor local minima, a
+relatively large momentum term is added to the gradient:
+
+$$
+\mathcal{Y}^{(t)} = \mathcal{Y}^{(t-1)} + \eta \frac{\partial C}{\partial
+\mathcal{Y}} + \alpha(t) \left( \mathcal{Y}^{(t-1)} - \mathcal{Y}^{(t-2)}\right)\,,
+$$
+
+where $\mathcal{Y}^{(t)}$ indicates the solution at iteration $t$, $\eta$
+indicates the learning rate, and $\alpha(t)$ represents the momentum at
+iteration $t$.
+
+- In addition, in the early stages of the optimization, Gaussian noise is added
+to the map points after each iteration. Gradually reducing the variance of this noise performs a type of simulated annealing
+
+
+## t-Distributed Stochastic Neighbor Embedding 
+
+- cost function of SNE is difficult to optimize 
+- t-SNE suffers from the "crowding problem"
+
+### t-SNE vs SNE 
+
+1. Uses a symmetrized version of the SNE cost function with simpler gradients
+2. Student-t distribution rather than a Gaussian to compute the similarity between two points *in the low dimensional space*.
+
+
+
+## Symmetric SNE 
+
+$$
+C = KL(P\|Q) = \sum_i \sum_j p_{ij} \log \frac{p_{ij}}{q_{ij}}\,,
+$$
+
+where  $p_{ii}$ and $q_{ii}$ to zero. 
+
+- $p_{ij} = p_{ji}$ and
+- $q_{ij} = q_{ji}$ for all $i, j$. 
+
+### Joint probabilies $p_{ij}$
+
+$$
+p_{ij} = \frac{\exp(-\|x_i - x_j\|^2/2\sigma^2)}{\sum_{k\neq l} \exp(-\|x_k -
+x_l\|^2/2\sigma^2)}\,
+$$
+
+### Joint probabilies $q_{ij}$
+
+$$
+q_{ij} = \frac{\exp(-\|x_i - x_j\|^2)}{\sum_{k\neq l} \exp(-\|x_k -
+x_l\|^2)}\,.
+$$ 
+
+## t-SNE
+
+
+Problems when a high-dimensional datapoint $x_i$ is an outlier, the values of $p_{ij}$ are extremely small for all $j$, so the
+location of its low-dimensional map point $y_i$ has very little effect on the
+cost function. 
+
+- $p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n}$.  ensures that $\sum_j p_{ij} >
+\frac{1}{2n}$  $\forall x_i$, 
+- each $x_i$ makes a significant contribution to the cost function. 
+
+
+### t-SNE Gradient
+
+The main advantage of the symmetric version of
+SNE is the simpler form of its gradient, which is faster to compute. 
+$$
+\frac{\partial C}{\partial y_i} = 4 \sum_j (p_{ij} - q_{ij})(y_i - y_j)\,.
+$$
+
+symmetric SNE produces maps that are just as good as asymmetric SNE
+
+## The Crowding Problem 
+
+>the area of the two-dimensional map that is available to accommodate moderately distant datapoints will not be nearly large enough
+compared with the area available to accommodate nearby datapoints.
+
+- Modeling the small distances accurately has detrimental effect on moderate distances representation
+
+- the crowding problem is not specific to SNE
+
+
+## Mismatched tails can compensate for mismatched dimensionalities 
+
+###  $t$-distribution for the $q_{ij}$ 
+
+Student distribution  with a single degree of freedom  also known as a Cauchy distribution
+$$
+q_{ij} = \frac{(1+\|y_i - y_j\|^2)^{-1}}{\sum_{k \neq l}(1+\|y_k -
+y_t\|^2)^{-1}}
+$$ 
+
+
+### Gradient 
+$$
+\frac{\partial C}{\partial y_i} = 4 \sum_j (p_{ij} - q_{ij})(y_i -
+y_j)(1+\|y_i - y_j\|^2)^{-1}\,.
+$$ {#eq-gradient-tsne}
+
+
+
+## Two optimization tricks
+
+### "Early compression"
+
+- Force the map points
+to stay close together at the start
+of the optimization. 
+- Easy for clusters to move through one
+another and thus to explore the space of solutions
+
+- implemented by adding an
+additional L2-penalty to the cost function that is proportional 
+
+###  "Early exaggeration" 
+
+Multiply all of the $p_{ij}$'s by, for example, 4, in the initial stages of the optimization. 
+
+-  natural clusters in the data tend to form tight widely separated
+clusters in the map.
+- creates a lot of relatively empty space in the map
+- makes it much easier for the clusters to move around relative to one
+another 
+
+
+
+## Uniform manifold approximation and projection (UMAP)
+
+UMAP works directly with similarities and uses cross-entropy as a criterion. 
+
+### Distance in high dimensional space
+
+$$
+v_{j|i} = \exp\left[(-d(x_i, xj ) - \rho_i)/\sigma_i\right]
+$$
+
+- $d (x_i, x_j)$ is the distance between $x_i$ and $x_j)$, which UMAP does not require to be Euclidean. 
+- $\rho_i$ is the distance to the nearest neighbor of $i$. 
+- $\sigma_i$ is the normalizing factor, which is chosen by a specific Algorithm  and plays a similar role to the perplexity-based calibration of $\sigma_i$ in t-SNE. 
+
+Symmetrization is carried out by fuzzy set union 
+$$v_{ij} =v_{j|i} + v_{i|j} - v_{j|i}v_{i|j}$$
+
+## Uniform manifold approximation and projection (UMAP)
+
+
+### Low dimensional similarities
+
+$$
+w_{ij}= (1 + a \|y_i - y_j\|^{2b}_2)^{-1}
+$$
+where $a$ and $b$ are user-defined positive values
+
+### Cost function (cross-entropy) 
+
+$$
+C_{UMAP} =
+\sum_{i\neq j} v_{ij} \log \frac{v_{ij}}{w_{ij}} + (1 - v_{ij} ) \log \frac{1 - v_{ij} }{1 - w_{ij}}
+$$
+
+
+Optimization process is  done by stochastic gradient descent 
+
+## UMAP vs t-SNE
+
+In terms of performance, 
+
+- UMAP is often considered to produce more stable and consistent results than t-SNE, 
+- especially when dealing with large datasets. 
+
+On the other hand, 
+
+- t-SNE is often considered to produce more visually appealing results, 
+- especially when dealing with small datasets.
+
+

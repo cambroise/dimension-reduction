@@ -1,0 +1,40 @@
+project:
+  type: book
+
+params:
+  solution: false
+   
+book:
+  title: "Lecture notes about Dimension Reduction, Visualization (draft)"
+  author: "Christophe"
+  date: "1/12/2026"
+  chapters:
+    - index.qmd
+    - chapters/svd.qmd
+    - exercises/exercices-svd.qmd
+    - chapters/factor-analysis.qmd
+    - exercises/exercices-fa.qmd
+    - chapters/ICA.qmd
+    - exercises/exercices-ica.qmd
+    - chapters/neural-unsupervised.qmd
+    - exercises/exercices-neural.qmd
+    - chapters/vae.qmd
+    - exercises/exercices-vae.qmd
+    - chapters/mds.qmd
+    - exercises/exercices-mds.qmd
+    - chapters/t-SNE.qmd
+  #  - projects/ica_em.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+  pdf:
+    documentclass: scrreprt
+
+
+

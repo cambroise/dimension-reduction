@@ -1,0 +1,363 @@
+# Dimensionality reduction and manifold learning
+
+## Goal
+
+Given pairwise
+
+-   dissimilarities $\delta_{ij}$ or
+-   high-dimensional input data $\{\boldsymbol x_i\}_{i=1\cdots...n}$
+
+reconstruct a lower dimensional map with embedded data
+$\{\boldsymbol y_i\}_{i=1\cdots...n}$
+
+### Principle
+
+-   Minimize an objective function quantiying the discrepancies between
+    the $\delta_{ij}$ and the distances
+    $d(\boldsymbol y_i, \boldsymbol y_j)$
+-   w.r.t $\{\boldsymbol y_i\}_{i=1\cdots...n}$.
+
+## A Brief history
+
+The methodology of Multidimensional Positioning (Multidimensional
+Scaling, MDS) was born in the USA in the 1950s
+
+-   Works of Torgerson (1952, 1958),
+-   Works of Shepard (1962),
+
+initial applications to sparse data in
+
+-   psychometrics,
+-   marketing,
+-   sensory analysis.
+
+
+
+
+
+
+
+
+## Proximity measures
+
+### Distance
+
+The function $d$ from $E \times E$ in $\mathbb{R}^{+}$ is a distance if
+it satisfies the following properties:
+
+-   $\forall i,j \in E, \ d_{ij}=d_{ji}$
+-   $\forall i \in E, \ d_{ii}=0$
+-   $\forall i,j \ and \ k \in E, \ d_{ik}\leq d_{ij} + d_{jk}$
+
+### Dissimilarity
+
+The function $\delta$ of $E \times E$ in $\mathbb{r}^{+}$ is a distance
+if it satisfies the following properties:
+
+-   $\forall i,j \in E, \ \delta_{ij}=\delta_{ji}$
+-   $\forall i \in E, \ \delta_{ii}=0$
+
+
+## Classical scaling
+
+Also known as Torgerson scaling, principal coordinate analysis (PCoA), ...
+
+### Principle
+
+- assume that the dissimilarities are distances and
+- find the main coordinates that explain the distances.
+
+## From distances to scalar product
+
+- How to calculate the distance matrix from $X$?
+ \begin{eqnarray*}
+ d_{ij}^2 &=& \sum_{a=1}^p (x_{ia}^2 + x_{ja}^2 -2 x_{ia}x_{ja} )\\
+          &=& \sum_{a=1}^p x_{ia}^2 + \sum_{a=1}^p x_{ja}^2 - 2
+          \sum_{a=1}^p x_{ia}x_{ja}
+ \end{eqnarray*}
+Hence:
+
+$$
+D^{2} = \mathrm{diag}(XX^t) \mathbf{1}_{(1,n)} + \mathbf{1}_{(n,1)} \mathrm{diag}(XX^t)^t - 2XX^t
+$$
+
+## Distance and data table (continued)
+
+- Let $J$ be the centering matrix,
+$$
+ J = I - \frac{1}{n} \mathbb{I}_{(n,n)}
+$$
+- Centering of $X$ in columns
+$$
+ JX = X - \frac{1}{n} \mathbb{I}_{(n,n)} X
+$$
+ 
+- Centering of $X$ in rows
+$$
+ X^t J = X^t - \frac{1}{n} X^t \mathbb{I}_{(n,n)} X
+$$
+
+
+## Double centering
+
+**Problem:** given $D^2$, recover $XX^T$.
+
+The key result is:
+$$
+-\frac{1}{2} J D^2 J = X X^T
+$$
+
+::: {.callout-tip title="Exercise"}
+Prove this identity — see the exercise *Double centering recovers the Gram matrix*.
+:::
+
+
+
+
+## Low rank approximation and principal coordinates
+
+The idea is to minimize 
+$$
+\| XX^T - Y Y^T\|_F^2
+$$ w.r.t $rank(YY^T)=k$
+
+We know the minimum is a low rank apprixation $B=YY^T$ of rank $k$
+
+$$
+B  = (U_{E_k} S_{1:k,1:k})(S_{1:k,1:k}^T  U_{E_k}^T) = Y Y^T
+$$
+
+- the analysis of the triple consists in replacing the matrix $D^2$ by the matrix of the square of dissimilarities $\Delta^2$
+
+### Remark
+
+If $\Delta^2$ is a Euclidean distance matrix, the solution $Y = U_{E_k} S_{1:k,1:k}$ (first $k$ principal components of $X^TX$) is optimal and PCoA is equivalent to PCA.
+
+::: {.callout-tip title="Exercise"}
+Prove this equivalence — see the exercise *Classical MDS is equivalent to PCA on Euclidean data*.
+:::
+
+
+
+## Algorithm
+
+1. Compute the matrix $\Delta^2$
+2. Double centering of $\Delta^2$:
+$$
+B_{\Delta^2}= -\frac{1}{2} J \Delta^2 J
+$$
+3. Spectral decomposition of $B_{\Delta^2}$~:
+$$
+B_{\Delta^2} = U \Lambda U^t
+$$
+4. Let $k$ be the representation dimension chosen for the solution.
+  - $\Lambda_{+}$ is the matrix of $k$ largest eigenvalues,
+listed in descending order on the diagonal.
+  - $U^{+}$ is the matrix of $k$ corresponding eigenvectors
+
+  - **The solution of the problem** is
+$$
+    Y= U^{+} \Lambda_{+}^{\frac{1}{2}}
+$$
+
+## Optimized criterion
+
+- the optimized criterion is
+ \begin{eqnarray*}
+     L(X) &=& || -\frac{1}{2} J(D^2(X) - \Delta^2)J ||^2 \\
+       & =& || XX^t + \frac{1}{2} J \Delta^2)J ||^2\\
+       &=& || X X^t - B_{\Delta^2}||^2
+ \end{eqnarray*}
+with $B_{\Delta^2}$ of rank $k$
+-  Remarks: If $\Delta$ is a dissimilarity matrix then
+some principal components will be negative!
+
+
+
+## Models and functions for the MDS
+
+MDS matches proximities $\delta_{ij}$ to distances $d_{ij}$ between
+objects: $$
+f: \delta_{ij} \longrightarrow d_{ij}(Y)
+$$ with $Y$ a classical array of low dimensional data - the
+dissimilarities $\delta_{ij}$ are the data of the pb - the distances
+$d_{ij}(Y)$ are the unknowns 
+
+- the MDS finds a configuration $Y$ in a
+space of dimension $m$, used to calculate distances $d_{ij}$
+
+## In practice
+
+the dissimilarities are marred by errors and one does not look for $f$
+such that $$
+f(\delta_{ij}) = d_{ij}(Y)
+$$ but rather $$
+f(\delta_{ij}) \approx d_{ij}(Y)
+$$ 
+
+
+## Error function
+
+### Definition of an error function
+
+$$
+e_{ij}= \large( f(\delta_{ij}) - d_{ij}(Y) \large)^2
+$$
+
+### Raw global error (raw stress)
+
+$$
+\sigma_{r}^2(Y) = \sum_{i>j} \large( f(\delta_{ij}) - d_{ij}(Y) \large)^2
+$$
+
+-   The global error is not very informative\~: A large value of
+    $\sigma_{r}^2(Y)$ does not necessarily indicate bad result.
+
+## Normalized error function
+
+### Normalized Stress
+
+$$
+\sigma_{n}^2(Y) = \frac{\sum_{i>j} \Big( f(\delta_{ij}) -
+d_{ij}(Y) \Big)^2}
+{\sum_{i>j} d_{ij}^2(Y)}
+$$
+
+### A general form
+
+$$
+\sigma^2(Y) = \sum_{i>j} w_{ij} \Big( f(\delta_{ij}) - d_{ij}(Y) \Big)^2
+$$
+
+
+## Different approaches
+
+-   metric: quantitative approach
+-   non-metric : qualitative approach
+
+### Metric approach
+
+Algebraic transformation of $\delta_{ij}$ (e.g. $f(\delta_{ij})=a \delta_{ij} + b$)
+
+With
+$$
+f(\delta_{ij})=\delta_{ij} + b(1 -\mathbb{I}_{(i=j)})
+$$
+assurance of the existence of an $Y$ configuration of dimension $n-2$ at most such that
+
+$$
+f(\delta_{ij})=d_{ij}(Y)
+$$
+
+### Non-metric approach
+
+-   $f$ is a monotone function that preserves order relations
+-   if $\delta_{ij}<\delta_{kl}$ then $f(\delta_{ij}<f(\delta_{kl}))$
+
+## Sammon's Projection 
+
+Metric Method: "Projection" into a space of low dimension (1,2, or 3)
+
+-   $Y= (\mathbf{y}_{1},\ldots,\mathbf{y}_{n})^t$ configuration sought
+
+-   Euclidian distance
+
+```{=tex}
+\begin{eqnarray}
+    d_{ij}& = & d(\mathbf{y}_{i},\mathbf{y}_{j}) \\
+    & = & \|\mathbf{y}_{i}-\mathbf{y}_{j}\|_2
+    \end{eqnarray}
+```
+##  Sammon stress function
+ Sammon searches for the  $\mathbf{y}_{i}$ minimizing
+
+$$
+  S(Y) = \frac{1}{\sum_{i<j} \delta_{ij}} \frac{\sum_{i<j} 
+    (\delta_{ij} - d_{ij}(Y))^2}{\delta_{ij}}
+$$
+
+- $f$ identity
+- $w_{kl}=\frac{1}{(\sum_{i<j}\delta_{ij}) \delta_{kl}}$
+ 
+### Remarks: 
+
+ Sammon's Stress
+ 
+ -  is invariant to rotations, translation and scaling 
+ - focuses on small distances
+
+
+## Minimisation of Sammon's Stress
+
+-  minimisation of a function from $\mathbb{R}^{n\times k}$ to $\mathbb{R}$
+- Global minimum is difficult to reach
+- Gradient descent
+
+### Remarks 
+
+- Many possible optimmisation methods
+- Initial Random  configuration 
+
+## Example in R
+
+
+### `sammon` from library  MASS
+
+```
+  Sammon's Non-Linear Mapping
+
+Description
+ One form of non-metric multidimensional scaling. 
+
+Usage
+ sammon(d, y = cmdscale(d, k), k = 2, niter = 100, trace = TRUE,
+ magic = 0.2, tol = 1e-4)
+```
+
+
+##  Sammon gradient
+
+The gradient of Sammon's stress with respect to coordinate $y_{ik}$ is:
+$$
+\frac{\partial S(Y)}{\partial y_{ik}} = -\frac{2}{\sum_{i<j}\delta_{ij}} \sum_{j \neq i} w_{ij} \frac{\delta_{ij}-d_{ij}}{d_{ij}}(y_{ik} - y_{jk})
+$$
+
+::: {.callout-tip title="Exercise"}
+Derive this gradient using the chain rule — see the exercise *Gradient of Sammon's stress*.
+:::
+
+##  Sammon gradient descent
+
+At iteration $q$
+$$
+y^{(q+1)}_{ik} := y^{(q)}_{ik}  - \eta \frac{\partial S(Y)}{\partial y_{ik}}
+$$
+
+## Example Ekman colors
+
+Ekman presents similarities for 14 colors which are based on a rating by 31 subjects where each pair of colors was rated on a 5-point scale (0 = no similarity up to 4 = identical). After averaging, the similarities were divided by 4 such that they are within the unit interval. Similarities of colors with wavelengths from 434 to 674 nm.
+
+
+
+```{r echo=FALSE}
+pkgs <- c("ggplot2", "colourvision", "MASS", "smacof", "ggspectra")
+new_pkgs <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]
+if (length(new_pkgs)) install.packages(new_pkgs)
+invisible(lapply(pkgs, library, character.only = TRUE))
+```
+
+## Example Ekman colors
+```{r}
+image(as.matrix(ekman))
+```
+
+
+## Example Classical scaling
+
+```{r}
+ekmanD <- sim2diss(ekman, method = "confusion", to.dist = TRUE)
+Y<-data.frame(cmdscale(ekmanD))
+ggplot(data=Y,aes(x=X1,y=X2,label=rownames(Y)),color=as.double(rownames(Y)))+geom_point()+geom_text(hjust = 0, nudge_x = 0.05)+stat_color()+scale_color_identity()
+```
+
+

@@ -1,0 +1,636 @@
+# Exercises on Factor Analysis
+
+
+
+
+We are in the Factor Analysis model 
+
+$$
+x = W z + \mu + \varepsilon,\qquad
+z\sim\mathcal N_L(0,I_L),\qquad
+\varepsilon\sim\mathcal N_D(0,\Psi),
+$$
+with $\Psi$ diagonal (and invertible). Hence
+$$x\mid z \sim \mathcal N_D(Wz+\mu,\Psi).   $$
+
+The woodbury identity that will be useful is
+$$
+(A+UCV)^{-1} = A^{-1} - A^{-1}U(C^{-1}+VA^{-1}U)^{-1}VA^{-1}.
+$$
+
+
+## Exercice: Joint distribution of $(z,x)$ and conditional distribution $z\mid x$
+
+1. Compute moments mean and covariance of the joint vector
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+
+We have to compute the mean and covariance of the joint vector
+
+	- Mean:
+$$
+\mathbb E[z]=0,\qquad \mathbb E[x]=\mathbb E[Wz+\mu+\varepsilon]=\mu.
+$$
+	-	Covariances:
+
+$$\Sigma_{zz}=\mathrm{Var}(z)=I_L.$$
+$$\Sigma_{xx}=\mathrm{Var}(Wz+\varepsilon)=W\,\mathrm{Var}(z)\,W^T+\mathrm{Var}(\varepsilon)=WW^T+\Psi.$$
+$$\Sigma_{zx}=\mathrm{Cov}(z,x)=\mathrm{Cov}(z,Wz+\varepsilon)=\mathrm{Cov}(z,Wz)=\mathrm{Var}(z)\,W^T=W^T.$$
+$$\Sigma_{xz}=W.$$
+ 
+
+
+
+So
+$$
+\begin{pmatrix} z\\ x\end{pmatrix}\sim
+\mathcal N\!\left(
+\begin{pmatrix}0\\ \mu\end{pmatrix},
+\begin{pmatrix}
+I_L & W^T\\
+W & WW^T+\Psi
+\end{pmatrix}
+\right).
+$$
+:::
+:::
+
+2.  Show that the mean vector and covariance matrix  $z\mid x$  can be simply written as
+
+$$z\mid x \sim \mathcal N\left(\mu_{z\mid x},\,\Sigma_{z\mid x}\right)
+$$
+with
+
+\begin{align*}
+\mu_{z\mid x}&= \mu_z+\Sigma_{zx}\Sigma_{xx}^{-1}(x-\mu_x)
+= W^T(WW^T+\Psi)^{-1}(x-\mu)\\
+\Sigma_{z\mid x}&= \Sigma_{zz}-\Sigma_{zx}\Sigma_{xx}^{-1}\Sigma_{xz}
+= I_L - W^T(WW^T+\Psi)^{-1}W.
+\end{align*}
+
+a. Covariance matrix: show that  $\Sigma_{z\mid x}=(I_L+W^T\Psi^{-1}W)^{-1}$
+
+  
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+Now we rewrite these into your two requested forms.
+
+
+First show  that $\Sigma_{z\mid x}=(I_L+W^T\Psi^{-1}W)^{-1}$
+
+
+It is a direct application of the Woodbury identity. 
+
+Identify $A=I_L$, $U=W$, $C=\Psi^{-1}$, $V=W^T$. Then
+$(A+UCV)^{-1} = (I_L + W^T \Psi^{-1} W)^{-1}$,
+
+and from Woodbury we have
+$$
+( I_L + W^T \Psi^{-1} W )^{-1} = I_L - W^T ( \Psi + WW^T )^{-1} W.
+$$
+
+
+Then    
+$$\boxed{\;\Sigma_{z\mid x} = (I_L+W^T\Psi^{-1}W)^{-1} \equiv S\;}
+$$
+
+which is exactly what we want.
+:::
+:::
+
+
+b. Mean vector: show that   
+  
+  $$
+  \mu_{z\mid x}=S W^T\Psi^{-1}(x-\mu)
+  $$
+    where  $S=(I_L+W^T\Psi^{-1}W)^{-1}$.
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+We already have
+$$
+\mu_{z\mid x}=W^T(WW^T+\Psi)^{-1}(x-\mu).
+$$
+Apply Woodbury to $(WW^T+\Psi)^{-1}$:
+$$
+(WW^T+\Psi)^{-1}
+=\Psi^{-1}-\Psi^{-1}W(I_L+W^T\Psi^{-1}W)^{-1}W^T\Psi^{-1}.
+$$
+Let $S=(I_L+W^T\Psi^{-1}W)^{-1}$. Then
+$$
+W^T(WW^T+\Psi)^{-1}
+= W^T\Psi^{-1} - (W^T\Psi^{-1}W)\,S\,W^T\Psi^{-1}.
+$$
+
+Since $S=(I_L+W^T\Psi^{-1}W)^{-1}$, we have
+$$
+(I_L+W^T\Psi^{-1}W)S=I_L
+\quad\Longrightarrow\quad
+I_L-(W^T\Psi^{-1}W)S=S.
+$$
+
+Therefore
+$$
+W^T(WW^T+\Psi)^{-1}
+=\bigl[I_L-(W^T\Psi^{-1}W)S\bigr]W^T\Psi^{-1}
+= S\,W^T\Psi^{-1}.
+$$
+
+Multiplying by $(x-\mu)$ yields
+$$
+\boxed{\mu_{z\mid x}=S\,W^T\Psi^{-1}(x-\mu)}.
+$$
+
+:::
+:::
+
+
+## Exercise: EM algorithm for FA
+
+1. Write down the complete data log-likelihood $\log p(x,z\mid \theta)$, where $\theta=(W,\mu,\Psi)$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}  
+Let us assume that $\boldsymbol \mu=0$ (centering of the $\boldsymbol x_i$), the complete log-likelihood is
+
+\begin{align*}
+\log{p( \boldsymbol {X,Z|\mu,W,\Psi})} &=& \sum_i \log \mathcal N_L(z_i; \boldsymbol 0,\boldsymbol I) + \log \mathcal N_D(x_i; \boldsymbol {Wz_i},\boldsymbol \Psi) \\
+&=& -\frac{n}{2} \log |\boldsymbol I_L | -\frac{n}{2}  Tr(\boldsymbol{\hat{\Sigma}_{zz}}) \\
+& & -\frac{n}{2} \log |\boldsymbol \Psi | -\frac{n}{2}  Tr(\boldsymbol{\hat{\Sigma}_{xx}\Psi^{-1}}) + Cst
+\end{align*}
+where
+$$
+\boldsymbol{\hat{\Sigma}_{xx}}=\frac{1}{n}\sum_i (\boldsymbol x_i - \boldsymbol{Wz_i})(\boldsymbol x_i - \boldsymbol{Wz_i})^T
+$$
+:::
+::: 
+
+2. E-step:  Compute the sufficient statistics $\mathbb E[z\mid x]$ and $\mathbb E[zz^T\mid x]$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}  
+From the previous exercise, we have
+$$\mathbb E[z\mid x] = \mu_{z\mid x} = S W^T \Psi^{-1} (x - \mu),$$
+and
+$$\mathbb E[zz^T\mid x] = \Sigma_{z\mid x} + \mu_{z\mid x} \mu_{z\mid x}^T = S + \mu_{z\mid x} \mu_{z\mid x}^T.$$
+:::
+::: 
+
+3. M-step: Derive the update equations for $W$, $\mu$ and $\Psi$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}  
+To derive the M-step updates, we maximize the expected complete data log-likelihood with respect to the parameters.
+Taking derivatives and setting them to zero, we obtain the following updates:
+- Update for $W$:
+$$W = \left( \sum_{n=1}^N (x_n - \mu) \mathbb E[z_n^T \mid x_n] \right) \left( \sum_{n=1}^N \mathbb E[z_n z_n^T \mid x_n] \right)^{-1}.$$
+- Update for $\mu$:
+$$\mu = \frac{1}{N} \sum_{n=1}^N x_n - W \frac{1}{N} \sum_{n=1}^N \mathbb E[z_n \mid x_n].$$
+- Update for $\Psi$:
+$$\Psi = \frac{1}{N} \sum_{n=1}^N \left[ (x_n - W \mathbb E[z_n \mid x_n] - \mu)(x_n - W \mathbb E[z_n \mid x_n] - \mu)^T + W \mathbb E[z_n z_n^T \mid x_n] W^T \right].$$
+:::   
+:::
+
+
+
+## Exercise: Program EM for Factor Analysis
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+### Initialisation via a PCA
+```{r initFA}
+#| echo: true
+
+initialisation.FA<-function(X,L=1){
+  # Return W and Psi
+  d<-ncol(X)
+  Sigmaxx<-var(X)
+  W<-eigen(Sigmaxx)$vectors[,1:L]
+  if (L==1) W<-cbind(W)
+  Psi<-rep(1,d)
+  return(list(W=W,Psi=Psi))
+}
+```
+:::   
+:::
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### E step 
+
+
+```{r}
+#| echo: true
+
+FA.E.step<-function(X,W,Psi){
+  # X is assumed to be centered
+  # M contain the contionnal expectation of the latent factor
+  # S contains the covariance of the latent factor
+  L<-ncol(W)
+  S <- solve(diag(L) + t(W)%*%diag(1/Psi)%*%W)
+  M<- X%*%diag(1/Psi)%*%W%*%S
+  return(list(S=S,M=M))
+}
+```
+:::   
+:::
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### M Step
+```{r}
+#| echo: true
+
+FA.M.step<-function(X,S,M,W,Psi){
+  n<-nrow(X)
+  Psi<-1/n*diag(t(X)%*%X -W%*%t(M)%*%X)
+  W<- (t(X)%*%M)%*%solve(n*S+t(M)%*%M)
+  return(list(Psi=Psi,W=W))
+}
+```
+:::   
+:::
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### Computation of the criterion
+```{r}
+#| echo: true
+
+log.likelihood.FA<-function(X,S,M,Psi,W){
+  n<-nrow(X)
+  Sigmax<-(t(X)%*%X-W%*%t(M)%*%X)
+  return(-(sum(diag(S+t(M)%*%M/n))
+          +log(det(diag(Psi)))+
+            log(det(S))+
+            1/n*sum(diag(Sigmax%*%diag(1/Psi)))))
+}
+```
+:::   
+:::
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### Putting it all together
+```{r}
+#| echo: true
+
+FA.EM<-function(X,L=1,max.iter=50){
+  X<-scale(X,scale=FALSE);mu<-attr(X,"scaled:center")
+  log.likelihood<-NULL; init<-initialisation.FA(X,L)
+  W<-init$W;  Psi<-init$Psi; criterion<- Inf; iteration<-1;  
+  log.likelihood[iteration]<--Inf
+  while ((criterion>1e-6)&&(iteration<=max.iter)){
+    E.step<-FA.E.step(X,W,Psi); E.step$S->S; E.step$M->M
+    M.step<-FA.M.step(X,S,M,W,Psi); M.step$Psi->Psi; M.step$W->W
+    iteration<-iteration+1
+    log.likelihood[iteration]<-log.likelihood.FA(X,S,M,Psi,W)
+    criterion<-abs((log.likelihood[iteration] - log.likelihood[iteration-1])/max(log.likelihood[iteration], log.likelihood[iteration-1]))
+  }
+  return(list( W=data.frame(W), Psi=Psi,
+               M=data.frame(M), S=S,mu=mu,
+               log.likelihood= log.likelihood[-1]))
+}
+```
+
+:::   
+:::
+
+
+## Exercise: mtcars dataset with Factor Analysis
+
+`mtcars` is a classic dataset in R, containing various attributes of different car models:
+
+- Miles per gallon (mpg)
+- Number of cylinders (cyl)
+- Displacement (disp)
+- Horsepower (hp)
+- Rear axle ratio (drat)
+- Weight (wt)
+- Quarter mile time (qsec)
+- Engine type (vs)
+- Transmission (am)
+- Number of forward gears (gear)
+- Number of carburetors (carb)
+
+
+In this exercise, we will compare the results of Principal Component Analysis (PCA) and Factor Analysis (FA) on the `mtcars` dataset.
+
+
+1. Load the `mtcars` dataset and select a subset of continuous variables for analysis (e.g., `mpg`, `disp`, `hp`, `drat`, `wt`, `qsec`).
+
+
+
+::: {.content-hidden unless-meta="params.solution"}
+
+::: {.callout-tip  title="Solution" collapse="true"}
+```{r}
+#| echo: true 
+
+# ============================================================
+# PCA vs Factor Analysis on a real dataset (mtcars)
+# Goal: illustrate different loadings and the role of communalities
+# ============================================================
+
+
+# Packages to install if needed
+pkgs <- c("psych", "ggplot2", "reshape2")
+
+to_install <- pkgs[!pkgs %in% installed.packages()[, "Package"]]
+
+if (length(to_install) > 0) {
+  install.packages(to_install, dependencies = TRUE)
+}
+
+library(psych)
+library(ggplot2)
+library(reshape2)
+
+# ------------------------------------------------------------
+# 1) Data: choose a small set of continuous-ish variables
+# ------------------------------------------------------------
+vars <- c("mpg","disp","hp","drat","wt","qsec")
+X <- mtcars[, vars]
+
+# Use correlation matrix (standard in PCA/FA comparisons)
+Xsc <- scale(X)
+R <- cor(Xsc)
+knitr::kable(round(head(mtcars), 2), caption = "mtcars dataset (first 6 rows)")
+```
+:::
+:::
+
+
+2. Perform PCA on the standardized data and extract the first two principal components. Then, perform Factor Analysis with 2 factors using maximum likelihood estimation and varimax rotation. Compare the loadings obtained from PCA and FA, and compute communalities and uniqueness for FA.  Use the `psych` package for Factor Analysis.
+[psych](https://cran.r-project.org/web/packages/psychTools/vignettes/factor.pdf)
+
+
+
+
+
+**Communalities** in FA represent the proportion of each variable's variance that can be explained by the common factors. They provide insight into how well the factors capture the underlying structure of the data.
+
+Communality for variable $j$ is defined as:
+$$\text{Communality}_j = \sum_{k=1}^{L} \lambda_{jk}^2,$$
+where $\lambda_{jk}$ is the loading of variable $j$ on factor $k$, and $L$ is the number of factors.
+
+
+
+**Uniqueness** is the portion of variance that is unique to each variable and not explained by the common factors. It reflects the specific variance of each variable that is not shared with others.
+
+Uniqueness and communalities are related as follows:  
+$$\text{Communality}_j = 1 - \text{Uniqueness}_j$$
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+
+
+```{r}
+#| echo: true
+
+# ------------------------------------------------------------
+# 2) PCA (on standardized data)
+# ------------------------------------------------------------
+pca <- prcomp(Xsc, center = FALSE, scale. = FALSE)
+
+# PCA loadings = eigenvectors (columns) of correlation matrix
+pca_load <- pca$rotation[, 1:2, drop = FALSE]
+
+# Variance explained (for context)
+pca_var <- (pca$sdev^2) / sum(pca$sdev^2)
+pca_var[1:2]
+
+# ------------------------------------------------------------
+# 3) Factor Analysis: 2 factors, ML, varimax rotation
+# ------------------------------------------------------------
+fa2 <- fa(Xsc, nfactors = 2, fm = "ml", rotate = "varimax",scores="regression")
+
+# FA rotated loadings
+fa_load <- as.matrix(unclass(fa2$loadings))[, 1:2, drop = FALSE]
+
+# Communalities (how well each variable is explained by the factors)
+comm <- fa2$communality
+
+## Visualize FA results with diagram
+fa.diagram(fa2)
+
+# ------------------------------------------------------------
+# 4) Plot projection side-by-side (PCA vs FA)
+# ------------------------------------------------------------
+library(ggplot2)
+pca_scores <- as.data.frame(pca$x[, 1:2])
+colnames(pca_scores) <- c("Dim1", "Dim2")
+pca_scores$Method <- "PCA"
+fa_scores <- as.data.frame(fa2$scores)
+colnames(fa_scores) <- c("Dim1", "Dim2")
+fa_scores$Method <- "FA (ML + varimax)"
+scores <- rbind(pca_scores, fa_scores)
+scores$Ind <- seq_len(nrow(scores))
+ggplot(scores, aes(x = Dim1, y = Dim2, color = Method)) +
+geom_text(aes(label = Ind),
+                  size = 3,
+                  nudge_x = 0.05,
+                  nudge_y = 0.05,
+                  show.legend = FALSE) +
+   geom_point(size = 2, alpha = 0.8) +  facet_wrap(~ Method) +
+  labs(title = "PCA vs Factor Analysis scores (mtcars)",
+       x = "Dimension 1", y = "Dimension 2") +
+  theme_minimal()
+
+
+
+
+# ------------------------------------------------------------
+# 5) Put loadings side-by-side (table)
+# ------------------------------------------------------------
+tab <- data.frame(
+  variable = rownames(pca_load),
+  PCA1 = round(pca_load[,1], 3),
+  PCA2 = round(pca_load[,2], 3),
+  FA1  = round(fa_load[,1], 3),
+  FA2  = round(fa_load[,2], 3),
+  communality = round(comm, 3),
+  uniqueness  = round(1 - comm, 3)
+)
+
+knitr::kable(tab, caption = "PCA vs Factor Analysis loadings (mtcars)")
+```
+
+
+
+
+
+```{r}
+#| echo: true
+#| fig-width: 8
+#| fig-cap: "Loadings comparison: PCA vs Factor Analysis (mtcars)"
+
+# ------------------------------------------------------------
+# 5) Visualization: compare loadings (PCA vs FA) as heatmaps
+# ------------------------------------------------------------
+pca_long <- melt(pca_load)
+colnames(pca_long) <- c("variable","component","loading")
+pca_long$method <- "PCA"
+
+fa_long <- melt(fa_load)
+colnames(fa_long) <- c("variable","component","loading")
+fa_long$method <- "FA (ML + varimax)"
+
+long <- rbind(pca_long, fa_long)
+
+# Order variables by absolute loading on the first dimension of each method
+# (optional: keeps plots readable)
+long$variable <- factor(long$variable, levels = rev(vars))
+
+ggplot(long, aes(x = component, y = variable, fill = loading)) +
+  geom_tile(color = "white") +
+  facet_wrap(~ method) +
+  geom_text(aes(label = sprintf("%.2f", loading)), size = 3) +
+  labs(title = "Loadings comparison: PCA vs Factor Analysis (mtcars)",
+       x = "", y = "") +
+  theme_minimal()
+
+```
+
+:::
+:::
+
+
+
+
+3. Interpret the results: Discuss the differences in loadings between PCA and FA, and explain the significance of communalities and uniqueness in the context of FA.
+
+|     |variable |   PCA1|   PCA2|    FA1|    FA2| communality| uniqueness|
+|:----|:--------|------:|------:|------:|------:|-----------:|----------:|
+|mpg  |mpg      | -0.459| -0.059| -0.842|  0.376|       0.850|      0.150|
+|disp |disp     |  0.466|  0.061|  0.864| -0.389|       0.898|      0.102|
+|hp   |hp       |  0.426| -0.361|  0.596| -0.698|       0.843|      0.157|
+|drat |drat     | -0.367| -0.437| -0.745|  0.050|       0.558|      0.442|
+|wt   |wt       |  0.439|  0.300|  0.974| -0.116|       0.962|      0.038|
+|qsec |qsec     | -0.253|  0.763| -0.065|  0.962|       0.930|      0.070|
+
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+### PCA loadings  
+*Variance-optimal but conceptually blurred*
+
+| variable | PCA1 | PCA2 |
+|---------:|-----:|-----:|
+| mpg  | -0.46 | -0.06 |
+| disp |  0.47 |  0.06 |
+| hp   |  0.43 | -0.36 |
+| drat | -0.37 | -0.44 |
+| wt   |  0.44 |  0.30 |
+| qsec | -0.25 |  0.76 |
+
+**PC1 mixes together**
+
+- *Size & power*: `disp`, `hp`, `wt`  
+- *Efficiency*: `mpg`  
+- *Gearing*: `drat`
+
+→ PC1 is a **mathematical axis of maximal variance**, not a clean concept.
+
+**PC2** is dominated by `qsec` but still polluted by `hp`, `drat`, `wt`.
+
+**PCA issues**
+
+- Components may be hard to name  
+- Cross-loadings everywhere  
+- No way to detect poorly represented variables
+
+
+
+### FA loadings  
+*Latent structure appears*
+
+| variable | FA1 | FA2 |
+|---------:|----:|----:|
+| mpg  | -0.84 |  0.38 |
+| disp |  0.86 | -0.39 |
+| hp   |  0.60 | -0.70 |
+| drat | -0.75 |  0.05 |
+| wt   |  0.97 | -0.12 |
+| qsec | -0.07 |  0.96 |
+
+#### Factor interpretation
+
+**Factor 1 – Mass / Power / Inefficiency**
+
+- `wt`, `disp`, `hp` strongly positive  
+- `mpg`, `drat` strongly negative  
+
+→ Heavy, powerful cars vs light efficient cars.
+
+**Factor 2 – Acceleration / Transmission dynamics**
+
+- `qsec` ≈ 1  
+- `hp` moderately negative  
+
+→ Clean acceleration–performance dimension.
+
+
+
+
+### Communalities and uniqueness  
+*What FA adds that PCA cannot*
+
+| variable | communality | uniqueness |
+|---------:|------------:|-----------:|
+| mpg  | 0.850 | 0.150 |
+| disp | 0.898 | 0.102 |
+| hp   | 0.843 | 0.157 |
+| drat | 0.558 | 0.442 |
+| wt   | 0.962 | 0.038 |
+| qsec | 0.930 | 0.070 |
+
+**Definitions**
+
+- $h_i^2$ (communality): proportion of variance explained by latent factors  
+- $u_i^2$ (uniqueness): variable-specific variance + noise
+
+**Examples**
+
+- `wt` – communality 0.962  
+  → almost entirely explained → *excellent indicator*
+
+- `qsec` – 0.93  
+  → nearly pure expression of Factor 2
+
+- `drat` – communality 0.558, uniqueness 0.442  
+  → almost half its variance is idiosyncratic → *poor latent measurement*
+
+PCA would force this variance into components and hide the problem.
+
+
+
+
+
+| PCA | FA |
+|-----|----|
+| Blurs concepts | Reveals latent mechanisms |
+| Forces all variance into components | Separates signal from noise |
+| No notion of measurement quality | Communalities help to diagnose variables |
+| Components are algebraic | Factors are meaningful constructs |
+
+
+- **PCA asks**: *How can I compress the data?*  
+- **FA asks**: *What invisible causes generate the correlations?*
+
+:::
+:::

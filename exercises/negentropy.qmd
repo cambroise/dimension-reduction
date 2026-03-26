@@ -1,0 +1,158 @@
+
+
+## Exercice: negentropy and ICA
+
+Show that the negentropy of a random variable $y$ can be approximated by
+$$
+J(y) \approx \left(\mathbb E[G(y)] - \mathbb E[G(\nu)]\right)^2,\quad \nu\sim\mathcal N(0,1).
+$$
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip  title="Solution" collapse="true"}
+
+The negentropy is defined as
+$$
+J(y) = H(y_{\text{gauss}}) - H(y),
+$$
+where $y_{\text{gauss}}$ is a Gaussian random variable with the same variance as $y$. Using the definition of differential entropy, we have
+$$
+H(y) = -\int p(y) \log p(y) \, dy,
+$$
+and similarly for $H(y_{\text{gauss}})$. The negentropy can be rewritten as
+$$
+J(y) = -\int p(y_{\text{gauss}}) \log p(y_{\text{gauss}}) \, dy + \int p(y) \log p(y) \, dy.
+$$
+As the true distribution $p(y)$ is generally unknown, we cannot compute $J(y)$ directly.
+
+To approximate the negentropy, we can use a Taylor expansion of the log-density around the Gaussian distribution. By choosing a suitable nonquadratic function $G$, we can express the difference in entropies in terms of expectations of $G$. This leads to the approximation
+$$
+J(y) \approx \left(\mathbb E[G(y)] - \mathbb E[G(\nu)]\right)^2,
+$$
+where $\nu$ is a standard normal random variable. The choice of $G$ determines the      
+quality of the approximation.
+
+
+:::
+:::
+
+
+
+
+## Negentropy, Taylor expansion of the log-density, and the role of $\log\cosh$
+
+### Negentropy as a KL divergence
+
+For a standardized random variable $Y$ (zero mean, unit variance), the negentropy can be written as
+$$
+J(Y)
+= H(Y_{\text{gauss}}) - H(Y)
+= D_{\mathrm{KL}}\!\big(f_Y \,\|\, \phi\big),
+$$
+where $f_Y$ is the density of $Y$ and $\phi$ is the standard Gaussian density.
+
+This formulation shows that negentropy measures the deviation of the **log-density** of $Y$ from that of a Gaussian.
+
+---
+
+### Taylor expansion of the log-density around the Gaussian
+
+Assume that $f_Y$ is close to $\phi$. We write
+$$
+\log f_Y(y) = \log \phi(y) + \varepsilon(y),
+$$
+where $\varepsilon(y)=0$ if and only if $Y$ is Gaussian.
+
+Using a Gram--Charlier (or Edgeworth) expansion, the density can be written as
+$$
+f_Y(y)
+= \phi(y)\Big[
+1 + \frac{\kappa_3}{3!}H_3(y)
++ \frac{\kappa_4}{4!}H_4(y)
++ \cdots
+\Big],
+$$
+where $\kappa_k$ are cumulants and $H_k$ are Hermite polynomials.
+
+Taking the logarithm yields a **Taylor expansion of the log-density**:
+$$
+\log f_Y(y)
+=
+\log \phi(y)
++ \frac{\kappa_3}{3!}H_3(y)
++ \frac{\kappa_4}{4!}H_4(y)
+- \frac12\Big(\frac{\kappa_3}{3!}H_3(y)\Big)^2
++ \cdots
+$$
+
+---
+
+### Approximation of negentropy
+
+Plugging this expansion into the KL divergence and using orthogonality of Hermite polynomials gives
+$$
+J(Y)
+\;\approx\;
+\frac{1}{12}\kappa_3^2
++ \frac{1}{48}\kappa_4^2
++ \cdots
+$$
+
+Hence, negentropy is approximately a **quadratic form in non-Gaussian cumulants**.
+This justifies kurtosis- and moment-based ICA criteria.
+
+---
+
+### Why polynomial contrasts are problematic
+
+Although the Taylor expansion suggests polynomial contrasts (e.g. $y^4$),
+high-order moments are:
+- statistically unstable,
+- extremely sensitive to outliers,
+- ill-defined for heavy-tailed distributions.
+
+A smooth, bounded surrogate is therefore required.
+
+---
+
+### Link with $\log\cosh$
+
+Consider the contrast function
+$$
+G(y) = \log\cosh(y).
+$$
+
+Its Taylor expansion around $0$ is
+$$
+\log\cosh(y)
+=
+\frac{y^2}{2}
+- \frac{y^4}{12}
++ \frac{y^6}{45}
+- \cdots
+$$
+
+This expansion mirrors the structure of the log-density expansion:
+- the quadratic term corresponds to the Gaussian reference,
+- higher-order even terms capture non-Gaussianity.
+
+Moreover, for large $|y|$,
+$$
+\log\cosh(y) \sim |y| - \log 2,
+$$
+which ensures robustness and finite expectations.
+
+---
+
+### Consequence for ICA
+
+In FastICA, negentropy is approximated by
+$$
+J(Y) \;\approx\;
+\big(\mathbb E[G(Y)] - \mathbb E[G(V)]\big)^2,
+\quad V\sim\mathcal N(0,1),
+$$
+where $G(y)=\log\cosh(y)$.
+
+Thus, $\log\cosh$ acts as a **regularized, globally stable proxy**
+for the Taylor expansion of the log-density around the Gaussian,
+providing a principled and robust approximation of negentropy.

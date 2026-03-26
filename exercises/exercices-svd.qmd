@@ -1,0 +1,359 @@
+# Exercises on Singular Value Decomposition
+
+For any matrix $\boldsymbol X \in \mathbb R^{n\times d}$, the SVD writes
+
+$$
+\boldsymbol X = \boldsymbol U \boldsymbol S \boldsymbol V^T,
+$$
+
+where $\boldsymbol U \in \mathbb R^{n\times n}$ and $\boldsymbol V \in \mathbb R^{d\times d}$ are orthogonal matrices and $\boldsymbol S \in \mathbb R^{n\times d}$ is a non-negative diagonal matrix with singular values $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0$ ($r = \text{rank}(\boldsymbol X)$).
+
+The economy (thin) SVD uses $\boldsymbol U \in \mathbb R^{n\times r}$, $\boldsymbol S \in \mathbb R^{r\times r}$, $\boldsymbol V \in \mathbb R^{d\times r}$.
+
+
+## Exercise: Orthonormality of the left singular vectors
+## Exercise: Orthonormality of the left singular vectors
+
+Recall the construction of the SVD. Let $\boldsymbol A = \boldsymbol X^T \boldsymbol X = \boldsymbol V \boldsymbol\Lambda \boldsymbol V^T$ be the eigendecomposition with $\lambda_1 \geq \cdots \geq \lambda_r > 0$. Define $\sigma_i = \sqrt{\lambda_i}$ and
+
+$$
+\boldsymbol u_i = \frac{1}{\sigma_i} \boldsymbol X \boldsymbol v_i \in \mathbb{R}^n, \quad 1 \leq i \leq r.
+$$
+
+1. Show that $\boldsymbol u_i^T \boldsymbol u_j = \delta_{ij}$, i.e., the vectors $\boldsymbol u_1, \ldots, \boldsymbol u_r$ are orthonormal.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+We compute directly:
+
+$$
+\boldsymbol u_i^T \boldsymbol u_j
+= \frac{1}{\sigma_i \sigma_j} (\boldsymbol X \boldsymbol v_i)^T (\boldsymbol X \boldsymbol v_j)
+= \frac{1}{\sigma_i \sigma_j} \boldsymbol v_i^T \boldsymbol X^T \boldsymbol X \boldsymbol v_j
+= \frac{1}{\sigma_i \sigma_j} \boldsymbol v_i^T \boldsymbol V \boldsymbol\Lambda \boldsymbol V^T \boldsymbol v_j.
+$$
+
+Since the columns of $\boldsymbol V$ are orthonormal, $\boldsymbol V^T \boldsymbol v_j = \boldsymbol e_j$ (the $j$-th canonical basis vector), so
+
+$$
+\boldsymbol u_i^T \boldsymbol u_j
+= \frac{1}{\sigma_i \sigma_j} \boldsymbol v_i^T \boldsymbol V \boldsymbol\Lambda \boldsymbol e_j
+= \frac{1}{\sigma_i \sigma_j} \boldsymbol v_i^T (\lambda_j \boldsymbol v_j)
+= \frac{\lambda_j}{\sigma_i \sigma_j} \boldsymbol v_i^T \boldsymbol v_j
+= \frac{\lambda_j}{\sigma_i \sigma_j} \delta_{ij}.
+$$
+
+When $i = j$, we have $\boldsymbol u_i^T \boldsymbol u_i = \frac{\lambda_i}{\sigma_i^2} = \frac{\lambda_i}{\lambda_i} = 1$. When $i \neq j$, we have $\boldsymbol u_i^T \boldsymbol u_j = 0$ by orthogonality of $\boldsymbol v_i$ and $\boldsymbol v_j$.
+
+:::
+:::
+
+2. Show that $\boldsymbol X \boldsymbol v_i = \sigma_i \boldsymbol u_i$ for $1 \leq i \leq r$ and $\boldsymbol X \boldsymbol v_i = \boldsymbol 0$ for $i > r$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+For $1 \leq i \leq r$: by definition $\boldsymbol u_i = \frac{1}{\sigma_i} \boldsymbol X \boldsymbol v_i$, so $\boldsymbol X \boldsymbol v_i = \sigma_i \boldsymbol u_i$.
+
+For $i > r$: $\boldsymbol v_i$ is in the kernel of $\boldsymbol X^T \boldsymbol X$ (since $\lambda_i = 0$), i.e., $\boldsymbol X^T \boldsymbol X \boldsymbol v_i = \boldsymbol 0$. Therefore
+
+$$
+\|\boldsymbol X \boldsymbol v_i\|^2 = \boldsymbol v_i^T \boldsymbol X^T \boldsymbol X \boldsymbol v_i = 0,
+$$
+
+which implies $\boldsymbol X \boldsymbol v_i = \boldsymbol 0$.
+:::
+:::
+
+
+## Exercise: Properties of the SVD
+
+Let $\boldsymbol X \in \mathbb R^{n\times d}$ with SVD $\boldsymbol X = \boldsymbol U \boldsymbol S \boldsymbol V^T$ and $r = \text{rank}(\boldsymbol X)$.
+
+1. Show that $\text{rank}(\boldsymbol X) = r$ equals the number of strictly positive singular values.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+Since $\boldsymbol U$ and $\boldsymbol V$ are invertible (orthogonal), $\text{rank}(\boldsymbol X) = \text{rank}(\boldsymbol S)$. The matrix $\boldsymbol S$ is diagonal with entries $\sigma_1, \ldots, \sigma_r, 0, \ldots, 0$, so its rank equals the number of non-zero diagonal entries, i.e., $r$.
+:::
+:::
+
+2. Identify the kernel of $\boldsymbol X$: $\ker(\boldsymbol X) = \{\boldsymbol x : \boldsymbol X \boldsymbol x = \boldsymbol 0\}$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+Let $\boldsymbol x = \boldsymbol V \boldsymbol\alpha$ (since $\boldsymbol V$ is a basis of $\mathbb R^d$). Then
+
+$$
+\boldsymbol X \boldsymbol x = \boldsymbol U \boldsymbol S \boldsymbol V^T \boldsymbol V \boldsymbol\alpha = \boldsymbol U \boldsymbol S \boldsymbol\alpha = \boldsymbol 0
+\iff \boldsymbol S \boldsymbol\alpha = \boldsymbol 0 \iff \alpha_1 = \cdots = \alpha_r = 0.
+$$
+
+Therefore $\ker(\boldsymbol X) = \text{span}(\boldsymbol v_{r+1}, \ldots, \boldsymbol v_d)$.
+:::
+:::
+
+3. Identify the range (column space) of $\boldsymbol X$: $\text{range}(\boldsymbol X) = \{\boldsymbol X \boldsymbol x : \boldsymbol x \in \mathbb R^d\}$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+For any $\boldsymbol x \in \mathbb R^d$, write $\boldsymbol V^T \boldsymbol x = \boldsymbol\alpha$. Then
+
+$$
+\boldsymbol X \boldsymbol x = \boldsymbol U \boldsymbol S \boldsymbol\alpha = \sum_{i=1}^r \sigma_i \alpha_i \boldsymbol u_i.
+$$
+
+So $\text{range}(\boldsymbol X) \subseteq \text{span}(\boldsymbol u_1, \ldots, \boldsymbol u_r)$. The reverse inclusion follows by taking $\boldsymbol x = \boldsymbol v_i$ for $i \leq r$. Hence
+
+$$
+\text{range}(\boldsymbol X) = \text{span}(\boldsymbol u_1, \ldots, \boldsymbol u_r).
+$$
+:::
+:::
+
+4. Show that $\boldsymbol U^T \boldsymbol U = \boldsymbol I_n$, $\boldsymbol V^T \boldsymbol V = \boldsymbol I_d$, and derive the formulas for $\boldsymbol X^T \boldsymbol X$ and $\boldsymbol X \boldsymbol X^T$ in terms of $\boldsymbol V$, $\boldsymbol U$, and the singular values.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+Orthogonality of $\boldsymbol U$ and $\boldsymbol V$ is given by definition. Then:
+
+$$
+\boldsymbol X^T \boldsymbol X = (\boldsymbol U \boldsymbol S \boldsymbol V^T)^T (\boldsymbol U \boldsymbol S \boldsymbol V^T)
+= \boldsymbol V \boldsymbol S^T \underbrace{\boldsymbol U^T \boldsymbol U}_{=\boldsymbol I} \boldsymbol S \boldsymbol V^T
+= \boldsymbol V \boldsymbol S^T \boldsymbol S \boldsymbol V^T
+= \boldsymbol V \boldsymbol\Lambda \boldsymbol V^T,
+$$
+
+where $\boldsymbol\Lambda = \text{diag}(\sigma_1^2, \ldots, \sigma_r^2, 0, \ldots, 0)$. The columns of $\boldsymbol V$ are therefore the eigenvectors of $\boldsymbol X^T \boldsymbol X$.
+
+Similarly,
+
+$$
+\boldsymbol X \boldsymbol X^T = \boldsymbol U \boldsymbol S \boldsymbol S^T \boldsymbol U^T = \boldsymbol U \boldsymbol\Lambda' \boldsymbol U^T,
+$$
+
+where $\boldsymbol\Lambda' = \text{diag}(\sigma_1^2, \ldots, \sigma_r^2, 0, \ldots, 0) \in \mathbb R^{n\times n}$. The columns of $\boldsymbol U$ are the eigenvectors of $\boldsymbol X \boldsymbol X^T$.
+:::
+:::
+
+
+## Exercise: Low-rank approximation and Frobenius norm
+
+Let $\boldsymbol X \in \mathbb R^{n\times d}$ with SVD $\boldsymbol X = \sum_{j=1}^r \sigma_j \boldsymbol u_j \boldsymbol v_j^T$ and let
+
+$$
+\hat{\boldsymbol X}_k = \sum_{j=1}^k \sigma_j \boldsymbol u_j \boldsymbol v_j^T, \quad k \leq r.
+$$
+
+1. Show that $\|\boldsymbol X\|_F^2 = \sum_{j=1}^r \sigma_j^2$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+$$
+\|\boldsymbol X\|_F^2
+= \text{trace}(\boldsymbol X^T \boldsymbol X)
+= \text{trace}(\boldsymbol V \boldsymbol\Lambda \boldsymbol V^T)
+= \text{trace}(\boldsymbol\Lambda)
+= \sum_{j=1}^r \sigma_j^2,
+$$
+
+using the cyclic property of the trace: $\text{trace}(\boldsymbol V \boldsymbol\Lambda \boldsymbol V^T) = \text{trace}(\boldsymbol\Lambda \boldsymbol V^T \boldsymbol V) = \text{trace}(\boldsymbol\Lambda)$.
+:::
+:::
+
+2. Show that $\|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2 = \sum_{j=k+1}^r \sigma_j^2$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+The residual is $\boldsymbol X - \hat{\boldsymbol X}_k = \sum_{j=k+1}^r \sigma_j \boldsymbol u_j \boldsymbol v_j^T$. Since the rank-1 matrices $\boldsymbol u_j \boldsymbol v_j^T$ are orthogonal in the Frobenius inner product (using orthonormality of $\boldsymbol u_j$ and $\boldsymbol v_j$):
+
+$$
+\langle \sigma_i \boldsymbol u_i \boldsymbol v_i^T,\; \sigma_j \boldsymbol u_j \boldsymbol v_j^T \rangle_F
+= \sigma_i \sigma_j \, \text{trace}(\boldsymbol v_i \boldsymbol u_i^T \boldsymbol u_j \boldsymbol v_j^T)
+= \sigma_i \sigma_j \, \delta_{ij}.
+$$
+
+Therefore $\|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2 = \sum_{j=k+1}^r \sigma_j^2$.
+:::
+:::
+
+3. The Eckart–Young theorem states that $\hat{\boldsymbol X}_k$ is the best rank-$k$ approximation of $\boldsymbol X$ in the Frobenius norm:
+
+$$
+\hat{\boldsymbol X}_k = \arg\min_{\hat{\boldsymbol X} \,:\, \text{rank}(\hat{\boldsymbol X})=k} \|\boldsymbol X - \hat{\boldsymbol X}\|_F^2.
+$$
+
+Given a rank-$k$ matrix $\boldsymbol Y_k$, use the inequality $\sigma_i(\boldsymbol X - \boldsymbol Y_k) \geq \sigma_{i+k}(\boldsymbol X)$ (which follows from the spectral norm sub-additivity) to prove that $\|\boldsymbol X - \boldsymbol Y_k\|_F^2 \geq \sum_{j=k+1}^r \sigma_j^2$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+Since $\text{rank}(\boldsymbol Y_k) = k$, we have $\sigma_{k+1}(\boldsymbol Y_k) = 0$. Applying the spectral norm sub-additivity with $\boldsymbol X' = \boldsymbol X - \boldsymbol Y_k$ and $\boldsymbol X'' = \boldsymbol Y_k$ gives for $i \geq 1$:
+
+$$
+\sigma_i(\boldsymbol X - \boldsymbol Y_k) + \sigma_{k+1}(\boldsymbol Y_k) \geq \sigma_{i+k}(\boldsymbol X),
+$$
+
+i.e., $\sigma_i(\boldsymbol X - \boldsymbol Y_k) \geq \sigma_{i+k}(\boldsymbol X)$.
+
+Summing the squares over $i = 1, \ldots, n-k$:
+
+$$
+\|\boldsymbol X - \boldsymbol Y_k\|_F^2
+= \sum_{i=1}^{n} \sigma_i(\boldsymbol X - \boldsymbol Y_k)^2
+\geq \sum_{i=1}^{n-k} \sigma_{i+k}(\boldsymbol X)^2
+= \sum_{j=k+1}^{r} \sigma_j^2
+= \|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2.
+$$
+
+Hence $\hat{\boldsymbol X}_k$ is optimal.
+:::
+:::
+
+
+## Exercise: SVD and Principal Component Analysis
+
+Let $\boldsymbol X \in \mathbb R^{n\times d}$ be a **centered** data matrix ($\sum_i \boldsymbol x_i = \boldsymbol 0$) with SVD $\boldsymbol X = \boldsymbol U \boldsymbol S \boldsymbol V^T$.
+
+1. Show that the empirical covariance matrix is $\hat{\boldsymbol\Sigma} = \frac{1}{n}\boldsymbol X^T \boldsymbol X = \frac{1}{n}\boldsymbol V \boldsymbol S^T \boldsymbol S \boldsymbol V^T$. Deduce that the right singular vectors $\boldsymbol v_1, \ldots, \boldsymbol v_d$ are the principal directions of PCA.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+Since $\boldsymbol X$ is centered, $\hat{\boldsymbol\Sigma} = \frac{1}{n}\boldsymbol X^T \boldsymbol X$. Substituting the SVD:
+
+$$
+\hat{\boldsymbol\Sigma} = \frac{1}{n} \boldsymbol V \boldsymbol S^T \boldsymbol S \boldsymbol V^T = \boldsymbol V \,\text{diag}\!\left(\frac{\sigma_1^2}{n}, \ldots, \frac{\sigma_d^2}{n}\right) \boldsymbol V^T.
+$$
+
+This is exactly the eigendecomposition of $\hat{\boldsymbol\Sigma}$, with eigenvalues $\lambda_j = \sigma_j^2/n$ and eigenvectors $\boldsymbol v_j$. Hence the principal directions of PCA coincide with the right singular vectors of $\boldsymbol X$.
+:::
+:::
+
+2. Define the matrix of principal component scores $\boldsymbol C = \boldsymbol X \boldsymbol V$. Show that $\boldsymbol C = \boldsymbol U \boldsymbol S$ and that the columns of $\boldsymbol C$ are orthogonal with $\|\boldsymbol C_{\bullet,k}\|^2 = \sigma_k^2$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+$$
+\boldsymbol C = \boldsymbol X \boldsymbol V = \boldsymbol U \boldsymbol S \boldsymbol V^T \boldsymbol V = \boldsymbol U \boldsymbol S.
+$$
+
+The columns of $\boldsymbol C$ are $\sigma_k \boldsymbol u_k$. Since $\boldsymbol U$ has orthonormal columns:
+
+$$
+\boldsymbol C^T \boldsymbol C = \boldsymbol S^T \boldsymbol U^T \boldsymbol U \boldsymbol S = \boldsymbol S^T \boldsymbol S = \text{diag}(\sigma_1^2, \ldots, \sigma_r^2, 0, \ldots, 0).
+$$
+
+Hence $\|\boldsymbol C_{\bullet,k}\|^2 = \sigma_k^2$ and columns are pairwise orthogonal.
+:::
+:::
+
+3. Express the fraction of total variance explained by the first $k$ principal components in terms of the singular values.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+
+The total variance (Frobenius norm squared) of $\boldsymbol X$ equals $\sum_{j=1}^r \sigma_j^2$. The variance captured by the first $k$ components is $\sum_{j=1}^k \sigma_j^2 = \|\boldsymbol C_{\bullet,1:k}\|_F^2$. The explained variance ratio is therefore
+
+$$
+\text{PVE}(k) = \frac{\sum_{j=1}^k \sigma_j^2}{\sum_{j=1}^r \sigma_j^2} \in [0,1].
+$$
+:::
+:::
+
+
+## Exercise: SVD in practice with R
+
+In this exercise we apply SVD to the `USArrests` dataset (available in base R), which records, for each of the 50 US states, the number of arrests per 100,000 residents for `Murder`, `Assault`, and `Rape`, as well as the percentage of the population living in urban areas (`UrbanPop`).
+
+1. Load and standardize the data, then compute the SVD. Report the singular values and the fraction of variance explained by each component.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+```{r}
+#| echo: true
+
+# Load and center/scale
+X <- scale(USArrests)
+n <- nrow(X); d <- ncol(X)
+
+# Compute SVD
+X.svd <- svd(X)
+sigma <- X.svd$d
+cat("Singular values:\n"); print(round(sigma, 3))
+
+# Variance explained
+var_exp <- sigma^2 / sum(sigma^2)
+cat("\nVariance explained (%):\n"); print(round(100 * var_exp, 1))
+cat("Cumulative (%):\n"); print(round(100 * cumsum(var_exp), 1))
+```
+:::
+:::
+
+2. Reconstruct $\hat{\boldsymbol X}_1$ and $\hat{\boldsymbol X}_2$ (rank-1 and rank-2 approximations). Compute and compare the reconstruction errors $\|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2$ for $k = 1, 2$ with the theoretical formula $\sum_{j=k+1}^r \sigma_j^2$.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+```{r}
+#| echo: true
+
+# Low-rank reconstruction
+low_rank <- function(svd_obj, k) {
+  svd_obj$u[, 1:k, drop = FALSE] %*%
+    diag(svd_obj$d[1:k], nrow = k) %*%
+    t(svd_obj$v[, 1:k, drop = FALSE])
+}
+
+for (k in 1:2) {
+  Xhat <- low_rank(X.svd, k)
+  err_computed  <- sum((X - Xhat)^2)
+  err_theory    <- sum(sigma[-(1:k)]^2)
+  cat(sprintf("k=%d  ||X - Xhat||_F^2 = %.4f  (theory: %.4f)\n",
+              k, err_computed, err_theory))
+}
+```
+:::
+:::
+
+3. Display the biplot of the first two principal components: plot the 50 states (scores) and overlay the variable loading vectors ($\boldsymbol v_1$ and $\boldsymbol v_2$). Interpret the result.
+
+::: {.content-hidden unless-meta="params.solution"}
+::: {.callout-tip title="Solution" collapse="true"}
+```{r}
+#| echo: true
+#| fig-cap: "Biplot of USArrests: states (points) and variable loadings (arrows)"
+
+# Scores
+scores  <- X.svd$u[, 1:2] %*% diag(X.svd$d[1:2])
+# Loadings
+loadings <- X.svd$v[, 1:2]
+
+# Plot
+plot(scores, type = "n",
+     xlab = sprintf("PC1 (%.1f%%)", 100 * var_exp[1]),
+     ylab = sprintf("PC2 (%.1f%%)", 100 * var_exp[2]),
+     main = "Biplot – USArrests")
+text(scores, labels = rownames(USArrests), cex = 0.6)
+
+# Overlay loading arrows (scaled for visibility)
+scale_factor <- 3
+arrows(0, 0,
+       loadings[, 1] * scale_factor, loadings[, 2] * scale_factor,
+       col = "red", length = 0.1, lwd = 2)
+text(loadings[, 1] * scale_factor * 1.1,
+     loadings[, 2] * scale_factor * 1.1,
+     labels = colnames(USArrests), col = "red", cex = 0.8)
+abline(h = 0, v = 0, lty = 2, col = "grey70")
+```
+
+PC1 separates states by overall crime level: states with high values of `Murder`, `Assault`, and `Rape` (e.g., Florida, Nevada) appear on the right, while low-crime states appear on the left. PC2 mainly contrasts `UrbanPop` with the crime variables, separating highly urbanised states from rural ones.
+:::
+:::

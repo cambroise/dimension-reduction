@@ -1,0 +1,26 @@
+# Quarto build outputs (keep PDF notes)
+_book/site_libs/
+_site/
+/.quarto/
+
+# Rendered HTML/PDF artifacts (generated from .qmd)
+**/*.html
+**/*_files/
+exercises/**/*.pdf
+
+# Large datasets
+data/MNIST/
+exercises/data/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# R
+.Rproj.user/
+*.Rhistory

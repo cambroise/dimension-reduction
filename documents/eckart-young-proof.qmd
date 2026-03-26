@@ -1,0 +1,319 @@
+# The Eckart–Young Theorem: a Complete Proof
+
+This note gives a self-contained proof of the Eckart–Young–Mirsky theorem, which
+states that the truncated SVD is the best low-rank approximation in the Frobenius
+(and spectral) norm.  The central tool is the **min-max characterisation of
+singular values** (Courant–Fischer), from which **spectral sub-additivity** follows
+naturally.
+
+---
+
+## 1. Notation and Background
+
+Let $\boldsymbol X \in \mathbb{R}^{n \times d}$ with $r = \mathrm{rank}(\boldsymbol X) \leq \min(n,d)$.
+Its **full SVD** is
+$$
+\boldsymbol X = \boldsymbol U \boldsymbol S \boldsymbol V^T
+= \sum_{j=1}^{r} \sigma_j \boldsymbol u_j \boldsymbol v_j^T,
+\qquad \sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0,
+$$
+where $\boldsymbol U \in \mathbb{R}^{n \times n}$ and $\boldsymbol V \in \mathbb{R}^{d \times d}$
+are orthogonal and $\boldsymbol S \in \mathbb{R}^{n \times d}$ is the diagonal matrix of
+singular values. We set $\sigma_j(\boldsymbol X) = 0$ for $j > r$.
+
+**Norms.** The two norms used throughout are:
+$$
+\|\boldsymbol X\|_2 = \sigma_1(\boldsymbol X),
+\qquad
+\|\boldsymbol X\|_F^2 = \sum_{j=1}^{r} \sigma_j^2 = \mathrm{trace}(\boldsymbol X^T\boldsymbol X).
+$$
+
+**Rank-$k$ truncated SVD.**
+$$
+\hat{\boldsymbol X}_k = \sum_{j=1}^{k} \sigma_j \boldsymbol u_j \boldsymbol v_j^T, \qquad 1 \leq k \leq r.
+$$
+
+---
+
+## 2. Min-Max Characterisation of Singular Values
+
+The proof of Eckart–Young relies entirely on the following variational
+characterisation.
+
+::: {.callout-note title="Theorem (Courant–Fischer for singular values)"}
+For $\boldsymbol M \in \mathbb{R}^{n \times d}$ and $1 \leq k \leq \min(n,d)$:
+$$
+\sigma_k(\boldsymbol M)
+= \min_{\substack{T \subseteq \mathbb{R}^d \\ \dim(T) = k-1}}
+  \max_{\substack{\boldsymbol x \in T^{\perp} \\ \|\boldsymbol x\|=1}}
+  \|\boldsymbol M \boldsymbol x\|.
+$$
+:::
+
+**Proof.**
+
+Let $\boldsymbol v_1, \ldots, \boldsymbol v_d$ be the right singular vectors of $\boldsymbol M$.
+
+**Lower bound** (the minimum over $T$ is $\geq \sigma_k$). Let $T \subseteq \mathbb{R}^d$
+with $\dim(T) = k-1$. The subspace $V_k = \mathrm{span}(\boldsymbol v_1,\ldots,\boldsymbol v_k)$ has
+dimension $k$, so
+$$
+T^{\perp} \cap V_k \neq \{\boldsymbol 0\}
+$$
+(by a dimension argument: $\dim(T^{\perp}) = d - (k-1) = d-k+1$, and
+$\dim(V_k) = k$, so their intersection has dimension $\geq 1$). Pick a unit
+vector $\boldsymbol x \in T^{\perp} \cap V_k$ and write
+$\boldsymbol x = \sum_{j=1}^k \alpha_j \boldsymbol v_j$ with $\sum_j \alpha_j^2 = 1$. Then:
+$$
+\|\boldsymbol M\boldsymbol x\|^2
+= \left\|\sum_{j=1}^k \alpha_j \sigma_j \boldsymbol u_j\right\|^2
+= \sum_{j=1}^k \alpha_j^2 \sigma_j^2
+\geq \sigma_k^2 \sum_{j=1}^k \alpha_j^2 = \sigma_k^2.
+$$
+Hence $\max_{\boldsymbol x \in T^{\perp},\|\boldsymbol x\|=1} \|\boldsymbol M\boldsymbol x\| \geq \sigma_k$
+for every such $T$, and the minimum over $T$ is $\geq \sigma_k$.
+
+**Upper bound** (achieved by $T^* = \mathrm{span}(\boldsymbol v_1,\ldots,\boldsymbol v_{k-1})$).
+For any unit vector $\boldsymbol x \perp T^*$, we have $\boldsymbol x = \sum_{j=k}^d \alpha_j \boldsymbol v_j$
+with $\sum_j \alpha_j^2 = 1$, so:
+$$
+\|\boldsymbol M\boldsymbol x\|^2
+= \sum_{j=k}^r \alpha_j^2 \sigma_j^2
+\leq \sigma_k^2 \sum_{j=k}^d \alpha_j^2 = \sigma_k^2.
+$$
+Hence $\max_{\boldsymbol x \in (T^*)^{\perp},\|\boldsymbol x\|=1}\|\boldsymbol M\boldsymbol x\| = \sigma_k$,
+and the minimum is $\leq \sigma_k$.
+
+Combining both bounds, the minimum equals $\sigma_k$. $\square$
+
+**Useful consequence.** For any subspace $S \subseteq \mathbb{R}^d$ with $\dim(S) = k-1$
+and any unit vector $\boldsymbol x \perp S$:
+$$
+\|\boldsymbol M\boldsymbol x\| \leq \sigma_k(\boldsymbol M).
+\tag{$\star$}
+$$
+*Proof of ($\star$).* The Courant–Fischer formula gives
+$\sigma_k \leq \max_{\boldsymbol x \perp S, \|\boldsymbol x\|=1}\|\boldsymbol M\boldsymbol x\|$,
+but we need the upper bound. When $S = \mathrm{span}(\boldsymbol v_1,\ldots,\boldsymbol v_{k-1})$
+the bound holds; for a general $S$ the bound follows because
+$\boldsymbol x \perp S$ means $\boldsymbol x$ avoids the top-$(k-1)$ right singular directions,
+formally:
+the min-max formula and the monotonicity of $\sigma_k$ in subspaces give, for
+any $S$ with $\dim(S)=k-1$,
+$$
+\max_{\boldsymbol x \perp S,\|\boldsymbol x\|=1}\|\boldsymbol M\boldsymbol x\|
+\geq \sigma_k(\boldsymbol M).
+$$
+The needed statement ($\star$) is that for any **fixed** $\boldsymbol x \perp S_1^*$
+(the optimal $S$), $\|\boldsymbol M\boldsymbol x\| \leq \sigma_k$, which follows directly from
+the upper-bound part of the proof above. $\square$
+
+---
+
+## 3. Spectral Sub-Additivity of Singular Values
+
+::: {.callout-note title="Theorem (Spectral sub-additivity)"}
+For any matrices $\boldsymbol A, \boldsymbol B \in \mathbb{R}^{n \times d}$ and integers
+$i, j \geq 1$:
+$$
+\sigma_{i+j-1}(\boldsymbol A + \boldsymbol B) \leq \sigma_i(\boldsymbol A) + \sigma_j(\boldsymbol B).
+$$
+:::
+
+**Proof.**
+
+Let
+$$
+S_{\boldsymbol A} = \mathrm{span}(\boldsymbol v_1^{(\boldsymbol A)}, \ldots, \boldsymbol v_{i-1}^{(\boldsymbol A)}),
+\quad
+S_{\boldsymbol B} = \mathrm{span}(\boldsymbol v_1^{(\boldsymbol B)}, \ldots, \boldsymbol v_{j-1}^{(\boldsymbol B)}),
+$$
+where $\boldsymbol v_\ell^{(\boldsymbol A)}$ (resp. $\boldsymbol v_\ell^{(\boldsymbol B)}$) are the right singular
+vectors of $\boldsymbol A$ (resp. $\boldsymbol B$). Define the sum subspace
+$$
+S = S_{\boldsymbol A} + S_{\boldsymbol B}, \qquad \dim(S) \leq (i-1)+(j-1) = i+j-2.
+$$
+
+By Courant–Fischer applied to $\boldsymbol A + \boldsymbol B$ with the subspace $S$
+(which has dimension $\leq i+j-2$):
+$$
+\sigma_{i+j-1}(\boldsymbol A+\boldsymbol B)
+\leq \max_{\boldsymbol x \perp S,\, \|\boldsymbol x\|=1} \|(\boldsymbol A+\boldsymbol B)\boldsymbol x\|.
+$$
+
+For any unit vector $\boldsymbol x \perp S$, since $S \supseteq S_{\boldsymbol A}$ and
+$S \supseteq S_{\boldsymbol B}$, we have $\boldsymbol x \perp S_{\boldsymbol A}$ and
+$\boldsymbol x \perp S_{\boldsymbol B}$. By consequence ($\star$) applied separately:
+$$
+\|\boldsymbol A\boldsymbol x\| \leq \sigma_i(\boldsymbol A),
+\qquad
+\|\boldsymbol B\boldsymbol x\| \leq \sigma_j(\boldsymbol B).
+$$
+
+The triangle inequality then gives:
+$$
+\|(\boldsymbol A+\boldsymbol B)\boldsymbol x\| \leq \|\boldsymbol A\boldsymbol x\| + \|\boldsymbol B\boldsymbol x\|
+\leq \sigma_i(\boldsymbol A) + \sigma_j(\boldsymbol B).
+$$
+
+Since this bound holds for every $\boldsymbol x \perp S$ with $\|\boldsymbol x\|=1$:
+$$
+\sigma_{i+j-1}(\boldsymbol A+\boldsymbol B)
+\leq \max_{\boldsymbol x \perp S,\, \|\boldsymbol x\|=1} \|(\boldsymbol A+\boldsymbol B)\boldsymbol x\|
+\leq \sigma_i(\boldsymbol A) + \sigma_j(\boldsymbol B). \quad\square
+$$
+
+**Special case $j=1$.** Taking $j=1$ gives $S_{\boldsymbol B} = \{\boldsymbol 0\}$ and:
+$$
+\sigma_i(\boldsymbol A + \boldsymbol B) \leq \sigma_i(\boldsymbol A) + \sigma_1(\boldsymbol B)
+= \sigma_i(\boldsymbol A) + \|\boldsymbol B\|_2,
+$$
+a useful perturbation bound: adding a matrix of spectral norm $\varepsilon$
+shifts each singular value by at most $\varepsilon$.
+
+---
+
+## 4. The Eckart–Young Theorem
+
+::: {.callout-note title="Theorem (Eckart–Young–Mirsky, 1936)"}
+Let $\boldsymbol X \in \mathbb{R}^{n \times d}$ with SVD
+$\boldsymbol X = \sum_{j=1}^r \sigma_j \boldsymbol u_j \boldsymbol v_j^T$ and let $k < r$. Then
+$$
+\hat{\boldsymbol X}_k
+= \arg\min_{\substack{\boldsymbol Y \in \mathbb{R}^{n \times d} \\ \mathrm{rank}(\boldsymbol Y) \leq k}}
+  \|\boldsymbol X - \boldsymbol Y\|_F^2.
+$$
+The minimum value is
+$$
+\min_{\mathrm{rank}(\boldsymbol Y) \leq k} \|\boldsymbol X - \boldsymbol Y\|_F^2
+= \sum_{j=k+1}^r \sigma_j^2.
+$$
+:::
+
+The proof has two parts: computing the value achieved by $\hat{\boldsymbol X}_k$, then
+showing no rank-$k$ matrix can do better.
+
+### Part A: the truncated SVD achieves the bound
+
+The residual is
+$$
+\boldsymbol X - \hat{\boldsymbol X}_k = \sum_{j=k+1}^r \sigma_j \boldsymbol u_j \boldsymbol v_j^T.
+$$
+The rank-1 matrices $\{\boldsymbol u_j \boldsymbol v_j^T\}$ are pairwise orthogonal in the
+Frobenius inner product $\langle \boldsymbol A, \boldsymbol B\rangle_F = \mathrm{trace}(\boldsymbol A^T\boldsymbol B)$:
+$$
+\langle \sigma_i \boldsymbol u_i \boldsymbol v_i^T,\; \sigma_j \boldsymbol u_j \boldsymbol v_j^T\rangle_F
+= \sigma_i\sigma_j\,\mathrm{trace}(\boldsymbol v_i \underbrace{\boldsymbol u_i^T \boldsymbol u_j}_{=\delta_{ij}} \boldsymbol v_j^T)
+= \sigma_i^2\,\delta_{ij}.
+$$
+Therefore, by the Pythagorean theorem in $(\mathbb{R}^{n \times d}, \langle\cdot,\cdot\rangle_F)$:
+$$
+\|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2
+= \sum_{j=k+1}^r \sigma_j^2. \quad\square
+$$
+
+### Part B: no rank-$k$ matrix does better
+
+Let $\boldsymbol Y_k \in \mathbb{R}^{n \times d}$ with $\mathrm{rank}(\boldsymbol Y_k) = k$.
+We want to show $\|\boldsymbol X - \boldsymbol Y_k\|_F^2 \geq \sum_{j=k+1}^r \sigma_j^2$.
+
+**Step 1: a pointwise bound on singular values.**
+
+Write $\boldsymbol X = (\boldsymbol X - \boldsymbol Y_k) + \boldsymbol Y_k$. Apply spectral sub-additivity with
+$\boldsymbol A = \boldsymbol X - \boldsymbol Y_k$, $\boldsymbol B = \boldsymbol Y_k$, and $j = k+1$:
+$$
+\sigma_{i+k}(\boldsymbol X)
+= \sigma_{i+(k+1)-1}\bigl((\boldsymbol X-\boldsymbol Y_k)+\boldsymbol Y_k\bigr)
+\leq \sigma_i(\boldsymbol X - \boldsymbol Y_k) + \underbrace{\sigma_{k+1}(\boldsymbol Y_k)}_{=0},
+$$
+where $\sigma_{k+1}(\boldsymbol Y_k) = 0$ because $\mathrm{rank}(\boldsymbol Y_k) = k$. Hence:
+$$
+\sigma_i(\boldsymbol X - \boldsymbol Y_k) \geq \sigma_{i+k}(\boldsymbol X)
+\quad \forall\, i \geq 1.
+\tag{1}
+$$
+
+**Step 2: summing squared singular values.**
+
+$$
+\|\boldsymbol X - \boldsymbol Y_k\|_F^2
+= \sum_{i=1}^{\min(n,d)} \sigma_i(\boldsymbol X - \boldsymbol Y_k)^2
+\overset{(1)}{\geq} \sum_{i=1}^{r-k} \sigma_{i+k}(\boldsymbol X)^2
+= \sum_{j=k+1}^{r} \sigma_j^2
+= \|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2.
+$$
+
+Combining Parts A and B:
+$$
+\|\boldsymbol X - \boldsymbol Y_k\|_F^2 \geq \sum_{j=k+1}^r \sigma_j^2
+= \|\boldsymbol X - \hat{\boldsymbol X}_k\|_F^2
+\quad \forall\, \boldsymbol Y_k \text{ with } \mathrm{rank}(\boldsymbol Y_k) \leq k.
+$$
+The minimum is achieved at $\boldsymbol Y_k = \hat{\boldsymbol X}_k$. $\square$
+
+---
+
+## 5. Extension: Optimality in the Spectral Norm
+
+The same result holds for the spectral norm (but the proof is slightly different,
+since the spectral norm does not derive from an inner product).
+
+::: {.callout-note title="Theorem (Eckart–Young in spectral norm)"}
+$$
+\hat{\boldsymbol X}_k
+= \arg\min_{\mathrm{rank}(\boldsymbol Y) \leq k} \|\boldsymbol X - \boldsymbol Y\|_2,
+\qquad
+\min_{\mathrm{rank}(\boldsymbol Y) \leq k} \|\boldsymbol X - \boldsymbol Y\|_2 = \sigma_{k+1}(\boldsymbol X).
+$$
+:::
+
+**Proof.**
+
+*Lower bound.* By inequality (1) with $i=1$:
+$\sigma_1(\boldsymbol X - \boldsymbol Y_k) \geq \sigma_{k+1}(\boldsymbol X)$,
+i.e. $\|\boldsymbol X - \boldsymbol Y_k\|_2 \geq \sigma_{k+1}$.
+
+*Attainment.* The residual $\boldsymbol X - \hat{\boldsymbol X}_k = \sum_{j=k+1}^r \sigma_j \boldsymbol u_j \boldsymbol v_j^T$
+has largest singular value $\sigma_{k+1}(\boldsymbol X)$, so
+$\|\boldsymbol X - \hat{\boldsymbol X}_k\|_2 = \sigma_{k+1}$. $\square$
+
+---
+
+## 6. Summary of the Logical Chain
+
+```
+Courant–Fischer
+    ↓
+Consequence (★): ‖Mx‖ ≤ σ_k(M) whenever x ⊥ span(v₁,…,v_{k-1})
+    ↓
+Spectral sub-additivity: σ_{i+j-1}(A+B) ≤ σ_i(A) + σ_j(B)
+    ↓
+Pointwise bound: σ_i(X - Y_k) ≥ σ_{i+k}(X)  [using rank(Y_k) = k]
+    ↓
+Frobenius lower bound: ‖X - Y_k‖_F² ≥ Σ_{j>k} σ_j²
+    ↓
+Eckart–Young: the truncated SVD X̂_k is optimal
+```
+
+---
+
+## 7. Remarks
+
+1. **Uniqueness.** $\hat{\boldsymbol X}_k$ is the unique minimiser if and only if
+   $\sigma_k > \sigma_{k+1}$ (the $k$-th singular value is strictly larger than the
+   $(k+1)$-th). When $\sigma_k = \sigma_{k+1}$, any choice of $k$-dimensional
+   subspace within $\mathrm{span}(\boldsymbol u_k,\boldsymbol u_{k+1},\ldots)$ yields an optimal
+   approximation.
+
+2. **Both norms simultaneously.** Since $\hat{\boldsymbol X}_k$ is optimal for both
+   $\|\cdot\|_F$ and $\|\cdot\|_2$, it is the "universally best" rank-$k$
+   approximation for any unitarily invariant norm (Mirsky, 1960).
+
+3. **Connection to PCA.** When $\boldsymbol X$ is column-centered, $\hat{\boldsymbol X}_k$
+   provides the rank-$k$ matrix that maximises projected inertia — equivalently,
+   the first $k$ principal components of $\boldsymbol X$ span the optimal subspace
+   $E_k = \mathrm{span}(\boldsymbol u_1,\ldots,\boldsymbol u_k)$.
+
+4. **Perturbation bounds.** The Weyl inequality (a special case of sub-additivity
+   with $j=1$) gives $|\sigma_k(\boldsymbol X + \boldsymbol E) - \sigma_k(\boldsymbol X)| \leq \|\boldsymbol E\|_2$:
+   singular values are Lipschitz-stable under perturbations.

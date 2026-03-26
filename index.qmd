@@ -1,0 +1,43 @@
+# Preface {.unnumbered}
+
+
+This booklet is a collection of slides, proofs and exercises for the lecture "Dimension reduction and visualization". In no way, it is a full textbook on the topic, but rather a supplement to the lecture.
+
+
+# Outline of the course
+
+
+We will consider the generic problem of reducing the dimension of a dataset, while preserving as much information as possible. We consider model of the type:
+
+$$
+x = f(z) + \varepsilon,
+$$
+
+where $x$ is the observed high-dimensional data, $z$ is a low-dimensional latent variable, $f$ is a function linking the two variables and $\varepsilon$ is a noise term. Different choices of $f$ and of the distribution of $\varepsilon$ lead to different models for dimension reduction.
+
+We will also study the so-called decoding problem, which consists in estimating $x$ from $ $z$:
+
+$$
+\hat x = g(z).
+$$
+
+Other approaches to dimension reduction, such as multidimensional scaling (MDS) or t-SNE, will not be studied in this course.
+
+
+The course is organized as follows:
+
+1. Linear models:
+ - Factor Analysis (FA),
+ - Probabilistic Principal Component Analysis (PPCA),
+ - Independent Component Analysis (ICA).
+
+2. Non-linear models:
+ - Auto-Encoders (AE),
+ - Variational Auto-Encoders (VAE).
+
+3. Multidimensional scaling (MDS) and t-SNE, UMAP (if time permits).
+
+Each chapter will contain slides, proofs and exercises related to the models studied.
+
+
+
